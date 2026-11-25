@@ -1,0 +1,14 @@
+> Call AskUserQuestion once with two questions. First: header Fruit, question 'Which fruits?', options Apple, Banana,
+  Cherry, multiSelect true. Second: header Pets, question 'Which pets?', options Cat, Dog, Fish, multiSelect true. Use
+  no other tool. Then reply with exactly the answer strings you received.
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+←  [×] Fruit  [×] Pets  √ Submit  →
+Review your answers
+ ● Which fruits?
+   → Kiwi
+ ● Which pets?
+   → Cat, Dog, Parrot
+Ready to submit your answers?
+> 1. Submit answers
+  2. Cancel
+───────────────────────────────────────────────────────────────────────────────────────────────────────── perch-live-1 ─

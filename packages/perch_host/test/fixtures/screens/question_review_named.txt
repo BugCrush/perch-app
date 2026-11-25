@@ -1,0 +1,18 @@
+ ▐▛███▛█   Claude Code v2.1.323
+▝▜██████▀  Haiku 5.5 · Claude Pro
+ ▝▝   ▝▝   D:\projects\example
+❯ Call AskUserQuestion once with two questions: 'Which color?' (header Color, options Red and Blue) and 'Which fruits?'
+  (header Fruit, options Apple, Banana, Cherry, multiSelect true). Then write just the color to color.txt with the
+  Write tool and stop.
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+←  ☒ Color  ☒ Fruit  ✔ Submit  →
+Review your answers
+ ● Which color?
+   → Blue
+ ● Which fruits?
+   → Apple, Cherry
+Ready to submit your answers?
+❯ 1. Submit answers
+  2. Cancel
+───────────────────────────────────────────────────────────────────────────────────────────────────── Perch live check ─
+

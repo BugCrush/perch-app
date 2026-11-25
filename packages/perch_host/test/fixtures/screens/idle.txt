@@ -1,0 +1,7 @@
+● Steps:
+  1. Read the file
+  2. Count the lines
+
+> 
+────────────────────────────────────────
+  ? for shortcuts

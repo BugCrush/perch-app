@@ -1,0 +1,233 @@
+# WAITING HERE: GitHub refuses a push that adds .github/workflows/ from a token without the
+# `workflow` scope. To turn it on: `gh auth refresh -h github.com -s workflow` (once, in a
+# browser), then `git mv ci/release.yml .github/workflows/release.yml`, commit and push.
+#
+# Perch release builds. Runs ONLY when a version tag (v*) is pushed or when started by hand
+# (Actions > Release > Run workflow): no runs on push or pull request, to save CI minutes.
+#
+# Builds: the host for Windows (x64) and macOS (Apple Silicon) with `dart compile exe`, the
+# macOS key helper prebuilt with swiftc, the Android release APK (signed with the release key
+# from the repository secrets), and the board page (the app built for the web). A tag push
+# attaches them to a GitHub Release with SHA-256 checksums (a tag with a suffix, such as
+# v0.3.0-rc1, makes a pre-release); a run by hand only keeps them as workflow artifacts.
+#
+# Repository variable (optional): PERCH_DEFAULT_RELAY, the relay URL a new host starts with.
+# Secrets: GOOGLE_SERVICES_JSON (apps/perch_app/android/app/google-services.json),
+# ANDROID_KEYSTORE_BASE64 (the release keystore, base64), ANDROID_KEY_PROPERTIES
+# (apps/perch_app/android/key.properties; storeFile=perch-release.jks). Never printed.
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      only:
+        description: 'Build only one part (a run by hand; to save minutes)'
+        type: choice
+        default: all
+        options: [all, board, host-windows, host-macos, android]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  FLUTTER_VERSION: '3.50.0'
+  # The release key's certificate (SHA-256) starts with this; the APK job checks it.
+  RELEASE_CERT_PREFIX: '47d6d7a7'
+  # Settings, not code: the relay a new host starts with (repository variable
+  # PERCH_DEFAULT_RELAY; empty: none, LAN only until `perch_host relay set`), and the
+  # repository the app looks in for updates (this one).
+  PERCH_DEFAULT_RELAY: ${{ vars.PERCH_DEFAULT_RELAY }}
+  PERCH_RELEASE_REPO: ${{ github.repository }}
+
+jobs:
+  version:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.v.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+      - run: flutter pub get
+      - id: v
+        name: One version for host, plugin and app (and the tag)
+        working-directory: packages/perch_host
+        run: |
+          tag=""
+          if [ "${GITHUB_REF_TYPE}" = "tag" ]; then tag="${GITHUB_REF_NAME}"; fi
+          v=$(dart run tool/release_version.dart --root ../.. --tag "$tag")
+          echo "version=$v" >> "$GITHUB_OUTPUT"
+          echo "Perch $v"
+
+  board:
+    needs: version
+    if: github.event_name == 'push' || inputs.only == 'all' || inputs.only == 'board'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+      - run: flutter pub get
+      - name: Board page (the app for the web, CanvasKit bundled)
+        working-directory: apps/perch_app
+        run: flutter build web --release --no-web-resources-cdn
+      - uses: actions/upload-artifact@v4
+        with:
+          name: board
+          path: apps/perch_app/build/web
+          if-no-files-found: error
+
+  host-windows:
+    needs: version
+    if: github.event_name == 'push' || inputs.only == 'all' || inputs.only == 'host-windows'
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+      - run: flutter pub get
+      - name: Compile the host
+        shell: bash
+        run: |
+          mkdir -p out
+          dart compile exe "-DPERCH_DEFAULT_RELAY=$PERCH_DEFAULT_RELAY" packages/perch_host/bin/perch_host.dart -o out/perch_host.exe
+          ./out/perch_host.exe --help | head -3 || true
+      - uses: actions/upload-artifact@v4
+        with:
+          name: host-windows
+          path: out
+          if-no-files-found: error
+
+  host-macos:
+    needs: version
+    if: github.event_name == 'push' || inputs.only == 'all' || inputs.only == 'host-macos'
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+      - run: flutter pub get
+      - name: Compile the host and the key helper (Apple Silicon)
+        run: |
+          mkdir -p out helper-src
+          dart compile exe "-DPERCH_DEFAULT_RELAY=$PERCH_DEFAULT_RELAY" packages/perch_host/bin/perch_host.dart -o out/perch_host
+          name=$(cd packages/perch_host && dart run tool/mac_helper_source.dart ../../helper-src)
+          swiftc -O helper-src/perch_mac_helper.swift -o "out/$name"
+          file out/*
+          ./out/perch_host --help | head -3 || true
+      - uses: actions/upload-artifact@v4
+        with:
+          name: host-macos
+          path: out
+          if-no-files-found: error
+
+  android:
+    needs: version
+    if: github.event_name == 'push' || inputs.only == 'all' || inputs.only == 'android'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+      - run: flutter pub get
+      - name: Firebase config and release key from the secrets
+        env:
+          GOOGLE_SERVICES_JSON: ${{ secrets.GOOGLE_SERVICES_JSON }}
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEY_PROPERTIES: ${{ secrets.ANDROID_KEY_PROPERTIES }}
+        run: |
+          if [ -z "$GOOGLE_SERVICES_JSON" ]; then echo "::error::The GOOGLE_SERVICES_JSON secret is missing."; exit 1; fi
+          # Without the release key Gradle would sign with the runner's debug key, and that APK
+          # could not update an installed Perch: no release without it.
+          if [ -z "$ANDROID_KEYSTORE_BASE64" ] || [ -z "$ANDROID_KEY_PROPERTIES" ]; then
+            echo "::error::The release key secrets (ANDROID_KEYSTORE_BASE64, ANDROID_KEY_PROPERTIES) are missing."; exit 1
+          fi
+          printf '%s' "$GOOGLE_SERVICES_JSON" > apps/perch_app/android/app/google-services.json
+          printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 -d > apps/perch_app/android/perch-release.jks
+          printf '%s\n' "$ANDROID_KEY_PROPERTIES" > apps/perch_app/android/key.properties
+      - name: Release APK
+        working-directory: apps/perch_app
+        run: flutter build apk --release "--dart-define=PERCH_RELEASE_REPO=$PERCH_RELEASE_REPO"
+      - name: Signed with the release key
+        run: |
+          apk=apps/perch_app/build/app/outputs/flutter-apk/app-release.apk
+          signer=$(ls -d "$ANDROID_HOME"/build-tools/*/ | sort -V | tail -1)apksigner
+          sha=$("$signer" verify --print-certs "$apk" | sed -n 's/.*certificate SHA-256 digest: *//p' | head -1 | tr -d ' :' | tr 'A-F' 'a-f')
+          case "$sha" in
+            "$RELEASE_CERT_PREFIX"*) echo "APK signed with the release key (certificate SHA-256 ${RELEASE_CERT_PREFIX}…)" ;;
+            *) echo "::error::The APK is not signed with the release key (certificate SHA-256 ${sha:0:8}…)"; exit 1 ;;
+          esac
+      - name: Remove the secrets from the runner
+        if: always()
+        run: rm -f apps/perch_app/android/app/google-services.json apps/perch_app/android/perch-release.jks apps/perch_app/android/key.properties
+      - uses: actions/upload-artifact@v4
+        with:
+          name: android
+          path: apps/perch_app/build/app/outputs/flutter-apk/app-release.apk
+          if-no-files-found: error
+
+  release:
+    needs: [version, board, host-windows, host-macos, android]
+    if: github.event_name == 'push' || inputs.only == 'all'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      V: ${{ needs.version.outputs.version }}
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: in
+      - name: Package the release files with checksums
+        run: |
+          mkdir -p dist work/win work/mac
+          cp in/host-windows/perch_host.exe work/win/
+          cp -r in/board work/win/board
+          (cd work/win && zip -qr "../../dist/perch-host-$V-windows-x64.zip" .)
+          cp in/host-macos/* work/mac/
+          chmod +x work/mac/perch_host work/mac/perch-mac-helper-*
+          cp -r in/board work/mac/board
+          tar -czf "dist/perch-host-$V-macos-arm64.tar.gz" -C work/mac .
+          cp in/android/app-release.apk "dist/perch-$V.apk"
+          (cd in/board && zip -qr "../../dist/perch-board-$V.zip" .)
+          (cd dist && sha256sum * > SHA256SUMS.txt && cat SHA256SUMS.txt)
+      - uses: actions/upload-artifact@v4
+        with:
+          name: perch-${{ env.V }}
+          path: dist
+          if-no-files-found: error
+      - name: GitHub Release (tag pushes only)
+        if: github.ref_type == 'tag'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          pre=""
+          case "$TAG" in *-*) pre="--prerelease" ;; esac
+          gh release create "$TAG" dist/* --repo "$GITHUB_REPOSITORY" --title "Perch $TAG" $pre \
+            --notes "Perch $V. Files: the host for Windows (x64) and macOS (Apple Silicon, key helper included) with the board page, the Android app (APK), the board page alone, and SHA256SUMS.txt."

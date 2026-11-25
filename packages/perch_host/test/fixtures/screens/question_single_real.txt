@@ -1,0 +1,21 @@
+✻ Worked for 5s · done 2:56 PM
+❯ Now call AskUserQuestion once with one multiSelect question: header Fruit, question 'Which fruits?', options Apple,
+  Banana, Cherry, multiSelect true. Then reply with just my answer.
+● User answered Claude's questions:
+  ⎿  · Which fruits? → Apple, Cherry
+● Apple, Cherry
+✻ Worked for 4s · done 2:57 PM
+❯ Call AskUserQuestion once with one question: header Size, question 'Which size?', options Small and Large. Then reply
+  with just my answer.
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+ ☐ Size
+Which size?
+❯ 1. Small
+     Small
+  2. Large
+     Large
+  3. Type something.
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+  4. Chat about this
+Enter to select · ↑/↓ to navigate · Esc to cancel
+

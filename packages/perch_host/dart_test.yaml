@@ -1,0 +1,10 @@
+# Tests tagged `live` call the real `claude` (and use plan usage). They are skipped by
+# default; run them by hand with `dart test -P live -t live`.
+tags:
+  live:
+    skip: "Calls the real claude; run with: dart test -P live -t live"
+presets:
+  live:
+    tags:
+      live:
+        skip: false

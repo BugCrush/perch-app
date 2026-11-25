@@ -1,0 +1,14 @@
+ ▐▛███▛█   Claude Code v2.1.323
+▝▜██████▀  Haiku 5.5 · Claude Pro
+ ▝▝   ▝▝   D:\projects\example
+> Call AskUserQuestion once with one multiSelect question: header Fruit, question 'Which fruits?', options Apple,
+  Banana, Cherry, multiSelect true. Use no other tool. Then reply with exactly the answer string you received.
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+←  [×] Fruit  √ Submit  →
+Review your answers
+ ● Which fruits?
+   → Apple, Cherry, Mango
+Ready to submit your answers?
+> 1. Submit answers
+  2. Cancel
+───────────────────────────────────────────────────────────────────────────────────────────────────────── perch-live-1 ─

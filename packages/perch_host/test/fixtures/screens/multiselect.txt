@@ -1,0 +1,23 @@
+  and use no other tool.
+● User answered Claude's questions:
+  ⎿  · Which color? → Red
+     · Which animal? → Dog
+● Color: Red. Animal: Dog.
+✻ Worked for 5s · done 2:56 PM
+❯ Now call AskUserQuestion once with one multiSelect question: header Fruit, question 'Which fruits?', options Apple,
+  Banana, Cherry, multiSelect true. Then reply with just my answer.
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+←  ☐ Fruit  ✔ Submit  →
+Which fruits?
+❯ 1. [ ] Apple
+         Apple
+  2. [ ] Banana
+         Banana
+  3. [ ] Cherry
+         Cherry
+  4. [ ] Type something
+     Submit
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+  5. Chat about this
+Enter to select · ↑/↓ to navigate · Esc to cancel
+

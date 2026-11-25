@@ -1,0 +1,6 @@
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+  What do you want to do?
+  ❯ 1. Stop and wait for limit to reset
+    2. Usage credit requests are turned off for your organization.
+  Enter to confirm · Esc to cancel
+────────────────────────────────────────────────────────────────────────────────────────────────────── perch-test ─

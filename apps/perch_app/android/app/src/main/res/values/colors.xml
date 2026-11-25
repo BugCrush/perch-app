@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="ic_launcher_background">#161310</color>
+    <!-- The warm black of the splash, the intro and the icon (Perch.ink). -->
+    <color name="perch_ink">#161310</color>
+</resources>

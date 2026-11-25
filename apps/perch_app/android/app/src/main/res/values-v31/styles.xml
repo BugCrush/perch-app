@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Android 12+ splash screen (it cannot be turned off): the plain warm black with an empty
+         icon, so it hands over to the Flutter intro, whose bird flies in, without a bird
+         jumping. -->
+    <style name="LaunchTheme" parent="@android:style/Theme.Light.NoTitleBar">
+        <item name="android:windowBackground">@color/perch_ink</item>
+        <item name="android:windowSplashScreenBackground">@color/perch_ink</item>
+        <item name="android:windowSplashScreenAnimatedIcon">@drawable/splash_blank</item>
+        <item name="android:windowSplashScreenIconBackgroundColor">@color/perch_ink</item>
+    </style>
+    <style name="NormalTheme" parent="@android:style/Theme.Light.NoTitleBar">
+        <item name="android:windowBackground">@color/perch_ink</item>
+    </style>
+</resources>

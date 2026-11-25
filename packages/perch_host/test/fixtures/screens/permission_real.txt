@@ -1,0 +1,23 @@
+     The user wants a file hello.txt containing the word "hello". Working directory is
+     D:\projects\example (git-ignored scratch area inside the repo, which fits the project's one-folder
+     rule).
+     Steps
+     1. Create D:\projects\example\hello.txt with the content hello using the Write tool.
+     2. Read the file back to confirm it contains hello.
+     Verification
+     - Read hello.txt and confirm the content is exactly hello.
+     - Nothing else to do.
+● Write(hello.txt)
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+ Create file
+ hello.txt
+╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌
+  1 hello
+╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌
+ Do you want to create hello.txt?
+ ❯ 1. Yes
+   2. Yes, and switch to accept edits (auto-approve file edits and common file commands) for this session (shift+tab)
+   3. No
+ Esc to cancel · Tab to amend
+──────────────────────────────────────────────────────────────────────────────────────────────── create-hello-txt-file ─
+

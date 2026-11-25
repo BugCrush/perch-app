@@ -1,0 +1,8 @@
+❯ Do not write any plan file and do not explore. Call the ExitPlanMode tool immediately, once, with no plan. After
+  approval reply with the word OK only.
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+ Exit plan mode?
+  Claude wants to exit plan mode
+  ❯ 1. Yes, and switch to default (ask each time) for this session
+    2. No
+───────────────────────────────────────────────────────────────────────────────────────────────────── perch-plan-check ─

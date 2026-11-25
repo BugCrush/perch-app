@@ -1,0 +1,25 @@
+{
+  // Perch relay. Deploy with `npx wrangler@4 deploy` after `npx wrangler@4 login` (owner).
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "perch-relay",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-10-01",
+  "durable_objects": {
+    "bindings": [
+      { "name": "MACHINE", "class_name": "MachineRelay" },
+      { "name": "BOARD", "class_name": "BoardStore" },
+      { "name": "ADMIN", "class_name": "RelayAdmin" }
+    ]
+  },
+  // The free plan needs SQLite-backed Durable Objects. v2 (2026-11-24): the board store.
+  "migrations": [
+    { "tag": "v1", "new_sqlite_classes": ["MachineRelay"] },
+    { "tag": "v2", "new_sqlite_classes": ["BoardStore"] },
+    { "tag": "v3", "new_sqlite_classes": ["RelayAdmin"] }
+  ],
+  "vars": {
+    "RELAY_LOG_FRAMES": "",
+    // A machine registering for the first time needs an invite code (2026-11-25).
+    "INVITES": "required"
+  }
+}

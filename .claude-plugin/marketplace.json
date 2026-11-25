@@ -1,0 +1,14 @@
+{
+  "name": "perch",
+  "owner": { "name": "Perch" },
+  "metadata": {
+    "description": "Perch: your Claude Code sessions on every machine, from your phone."
+  },
+  "plugins": [
+    {
+      "name": "perch",
+      "source": "./packages/perch_host/claude_plugin/perch",
+      "description": "/perch (this machine's task board) and the hooks that tell the Perch host about each session event."
+    }
+  ]
+}

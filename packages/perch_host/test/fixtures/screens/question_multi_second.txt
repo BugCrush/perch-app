@@ -1,0 +1,18 @@
+ ▐▛███▛█   Claude Code v2.1.323
+▝▜██████▀  Haiku 5.5 · Claude Pro
+ ▝▝   ▝▝   D:\projects\example
+❯ Call the AskUserQuestion tool once with exactly two questions: header Color, question 'Which color?', options Red and
+  Blue; header Animal, question 'Which animal?', options Cat and Dog. After I answer, reply with just my two answers
+  and use no other tool.
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+←  ☒ Color  ☐ Animal  ✔ Submit  →
+Which animal?
+❯ 1. Cat
+     Cat
+  2. Dog
+     Dog
+  3. Type something.
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+  4. Chat about this
+Enter to select · Tab/Arrow keys to navigate · Esc to cancel
+

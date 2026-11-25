@@ -1,0 +1,21 @@
+ Here is Claude's plan:
+╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌
+ Plan: create hello.txt
+ Context
+ The user wants a file hello.txt containing the word "hi". Working directory is D:\projects\example
+ (an example folder).
+ Steps
+ 1. Create D:\projects\example\hello.txt with the content hi using the Write tool.
+ 2. Read the file back to confirm it contains hi.
+ Verification
+ - Read hello.txt and confirm the content is exactly hi.
+ - Nothing else to do.
+╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+ Claude has written up a plan and is ready to execute. Would you like to proceed?
+   1. Yes, and use auto mode
+   2. Yes, manually approve edits
+ ❯ 3. Use the word hello instead
+      shift+tab to approve with this feedback
+ ctrl+g to edit in Notepad · C:\Users\owner\.claude\plans\example-plan.md
+

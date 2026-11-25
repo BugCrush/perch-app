@@ -1,0 +1,11 @@
+.dart_tool/
+build/
+*.iml
+.idea/
+local.properties
+.scratch/
+
+# Firebase: service-account keys are secrets; google-services.json stays local
+*firebase-adminsdk*.json
+fcm-service-account.json
+apps/perch_app/android/app/google-services.json

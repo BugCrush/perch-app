@@ -1,0 +1,166 @@
+{
+  "description": "Perch: /perch (the task board menu) and the hooks that tell the Perch host on this machine about each session event (questions, permissions, plans, turns ending, usage limits).",
+  "modules": [
+    "./register.tsx"
+  ],
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "AskUserQuestion|ExitPlanMode",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "[ \"$OS\" = Windows_NT ] || exit 0; d=\"${PERCH_STATE_DIR:-${APPDATA:+$APPDATA/perch}}\"; read -r p 2>/dev/null <\"${d:-$HOME/.perch}/port\"; case \"$p\" in \"\"|*[!0-9]*) p=8787;; esac; curl -s -m 2 -o /dev/null -X POST -H \"Content-Type: application/json\" --data-binary @- \"http://127.0.0.1:$p/hook\" >/dev/null 2>&1; exit 0 # perch-hook",
+            "async": true,
+            "timeout": 5
+          }
+        ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "[ \"$OS\" = Windows_NT ] && exit 0; d=\"${PERCH_STATE_DIR:-${APPDATA:+$APPDATA/perch}}\"; read -r p 2>/dev/null <\"${d:-$HOME/.perch}/port\"; case \"$p\" in \"\"|*[!0-9]*) p=8787;; esac; curl -sf --connect-timeout 1 -m 2 -X POST -H \"Content-Type: application/json\" --data-binary @- \"http://127.0.0.1:$p/hook?check=1\" 2>/dev/null; exit 0 # perch-hook",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "PermissionRequest": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "d=\"${PERCH_STATE_DIR:-${APPDATA:+$APPDATA/perch}}\"; read -r p 2>/dev/null <\"${d:-$HOME/.perch}/port\"; case \"$p\" in \"\"|*[!0-9]*) p=8787;; esac; curl -sf -m 21630 -X POST -H \"Content-Type: application/json\" --data-binary @- \"http://127.0.0.1:$p/hook?wait=1\" 2>/dev/null; exit 0 # perch-hook",
+            "timeout": 21660
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "d=\"${PERCH_STATE_DIR:-${APPDATA:+$APPDATA/perch}}\"; read -r p 2>/dev/null <\"${d:-$HOME/.perch}/port\"; case \"$p\" in \"\"|*[!0-9]*) p=8787;; esac; curl -s -m 2 -o /dev/null -X POST -H \"Content-Type: application/json\" --data-binary @- \"http://127.0.0.1:$p/hook\" >/dev/null 2>&1; exit 0 # perch-hook",
+            "async": true,
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "Notification": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "d=\"${PERCH_STATE_DIR:-${APPDATA:+$APPDATA/perch}}\"; read -r p 2>/dev/null <\"${d:-$HOME/.perch}/port\"; case \"$p\" in \"\"|*[!0-9]*) p=8787;; esac; curl -s -m 2 -o /dev/null -X POST -H \"Content-Type: application/json\" --data-binary @- \"http://127.0.0.1:$p/hook\" >/dev/null 2>&1; exit 0 # perch-hook",
+            "async": true,
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "d=\"${PERCH_STATE_DIR:-${APPDATA:+$APPDATA/perch}}\"; read -r p 2>/dev/null <\"${d:-$HOME/.perch}/port\"; case \"$p\" in \"\"|*[!0-9]*) p=8787;; esac; curl -s -m 2 -o /dev/null -X POST -H \"Content-Type: application/json\" --data-binary @- \"http://127.0.0.1:$p/hook\" >/dev/null 2>&1; exit 0 # perch-hook",
+            "async": true,
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "d=\"${PERCH_STATE_DIR:-${APPDATA:+$APPDATA/perch}}\"; read -r p 2>/dev/null <\"${d:-$HOME/.perch}/port\"; case \"$p\" in \"\"|*[!0-9]*) p=8787;; esac; curl -s -m 2 -o /dev/null -X POST -H \"Content-Type: application/json\" --data-binary @- \"http://127.0.0.1:$p/hook\" >/dev/null 2>&1; exit 0 # perch-hook",
+            "async": true,
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "SubagentStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "d=\"${PERCH_STATE_DIR:-${APPDATA:+$APPDATA/perch}}\"; read -r p 2>/dev/null <\"${d:-$HOME/.perch}/port\"; case \"$p\" in \"\"|*[!0-9]*) p=8787;; esac; curl -s -m 2 -o /dev/null -X POST -H \"Content-Type: application/json\" --data-binary @- \"http://127.0.0.1:$p/hook\" >/dev/null 2>&1; exit 0 # perch-hook",
+            "async": true,
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "SubagentStop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "d=\"${PERCH_STATE_DIR:-${APPDATA:+$APPDATA/perch}}\"; read -r p 2>/dev/null <\"${d:-$HOME/.perch}/port\"; case \"$p\" in \"\"|*[!0-9]*) p=8787;; esac; curl -s -m 2 -o /dev/null -X POST -H \"Content-Type: application/json\" --data-binary @- \"http://127.0.0.1:$p/hook\" >/dev/null 2>&1; exit 0 # perch-hook",
+            "async": true,
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "sh \"${CLAUDE_PLUGIN_ROOT}/hooks/perch-setup.sh\" </dev/null >/dev/null 2>&1; exit 0 # perch-setup",
+            "async": true,
+            "timeout": 600
+          },
+          {
+            "type": "command",
+            "command": "d=\"${PERCH_STATE_DIR:-${APPDATA:+$APPDATA/perch}}\"; read -r p 2>/dev/null <\"${d:-$HOME/.perch}/port\"; case \"$p\" in \"\"|*[!0-9]*) p=8787;; esac; curl -s -m 2 -o /dev/null -X POST -H \"Content-Type: application/json\" --data-binary @- \"http://127.0.0.1:$p/hook\" >/dev/null 2>&1; exit 0 # perch-hook",
+            "async": true,
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "SessionEnd": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "d=\"${PERCH_STATE_DIR:-${APPDATA:+$APPDATA/perch}}\"; read -r p 2>/dev/null <\"${d:-$HOME/.perch}/port\"; case \"$p\" in \"\"|*[!0-9]*) p=8787;; esac; curl -s -m 2 -o /dev/null -X POST -H \"Content-Type: application/json\" --data-binary @- \"http://127.0.0.1:$p/hook\" >/dev/null 2>&1; exit 0 # perch-hook",
+            "async": true,
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "StopFailure": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "d=\"${PERCH_STATE_DIR:-${APPDATA:+$APPDATA/perch}}\"; read -r p 2>/dev/null <\"${d:-$HOME/.perch}/port\"; case \"$p\" in \"\"|*[!0-9]*) p=8787;; esac; curl -s -m 2 -o /dev/null -X POST -H \"Content-Type: application/json\" --data-binary @- \"http://127.0.0.1:$p/hook\" >/dev/null 2>&1; exit 0 # perch-hook",
+            "async": true,
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "PostToolBatch": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "[ \"$OS\" = Windows_NT ] && exit 0; d=\"${PERCH_STATE_DIR:-${APPDATA:+$APPDATA/perch}}\"; read -r p 2>/dev/null <\"${d:-$HOME/.perch}/port\"; case \"$p\" in \"\"|*[!0-9]*) p=8787;; esac; curl -sf --connect-timeout 1 -m 2 -X POST -H \"Content-Type: application/json\" --data-binary @- \"http://127.0.0.1:$p/hook?check=1\" 2>/dev/null; exit 0 # perch-hook",
+            "timeout": 5
+          }
+        ]
+      }
+    ]
+  }
+}

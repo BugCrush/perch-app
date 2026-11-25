@@ -1,0 +1,18 @@
+     The user wants a file hello.txt containing the word "hello". Working directory is
+     D:\projects\example (git-ignored scratch area inside the repo, which fits the project's one-folder
+     rule).
+     Steps
+     1. Create D:\projects\example\hello.txt with the content hello using the Write tool.
+     2. Read the file back to confirm it contains hello.
+     Verification
+     - Read hello.txt and confirm the content is exactly hello.
+     - Nothing else to do.
+● Write(hello.txt)
+  ⎿  User rejected write to hello.txt
+      1 hello
+✻ Crunched for 12s · done 3:00 PM
+──────────────────────────────────────────────────────────────────────────────────────────────── create-hello-txt-file ─
+❯
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+  ⏸ manual mode on · ? for shortcuts · ← 3 agents                                                   ◐ medium · /effort
+
