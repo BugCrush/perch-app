@@ -300,7 +300,7 @@ export const register: Register = on => {
             <Text dimColor>{busy ? 'Asking the host for the pairing code…' : 'No pairing code.'}</Text>
           ) : (
             <Box flexDirection="column">
-              <Text>In the Perch app on your phone tap Add machine and scan this code:</Text>
+              <Text>Scan this code with your phone's camera (or in the Perch app: Add machine):</Text>
               <Text>{pairing.qr}</Text>
               <Text dimColor>Or paste this link in the app (keep it private: it lets a device ask to pair):</Text>
               <Text wrap="wrap">{pairing.link}</Text>

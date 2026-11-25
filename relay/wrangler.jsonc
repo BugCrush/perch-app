@@ -20,6 +20,10 @@
   "vars": {
     "RELAY_LOG_FRAMES": "",
     // A machine registering for the first time needs an invite code (2026-11-25).
-    "INVITES": "required"
+    "INVITES": "required",
+    // The Perch app may open https://<relay>/pair (Android App Links): its package and the
+    // release certificate's SHA-256 (public; in every APK).
+    "APP_PACKAGE": "dev.perch.perch_app",
+    "APP_CERT_SHA256": "47:D6:D7:A7:BF:ED:CC:07:3F:F4:EB:2C:C5:05:BF:26:3D:D2:38:40:B9:56:22:A6:53:75:53:B4:1D:18:A6:0A"
   }
 }

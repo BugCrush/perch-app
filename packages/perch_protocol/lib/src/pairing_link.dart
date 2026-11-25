@@ -40,7 +40,25 @@ class PairingLink {
   });
 
   @override
-  String toString() {
+  String toString() => 'perch://pair?$_query';
+
+  /// The link as a web address on the relay, `https://<relay>/pair#<the same fields>`: any
+  /// phone camera opens it (the app claims the address; without the app the relay's page
+  /// says how to get it). The fields sit after `#`, which a browser never sends to the
+  /// relay. Null for a host without a relay.
+  String? get webUrl {
+    final r = relayUrl;
+    if (r == null) return null;
+    final base = Uri.parse(r);
+    final scheme = switch (base.scheme) { 'https' || 'wss' => 'https', _ => 'http' };
+    final prefix = base.path.endsWith('/') ? base.path.substring(0, base.path.length - 1) : base.path;
+    return '$scheme://${base.authority}$prefix/pair#$_query';
+  }
+
+  /// What the QR code holds: the web address when there is a relay, else `perch://`.
+  String get qrText => webUrl ?? toString();
+
+  String get _query {
     final q = <String>[
       'v=1',
       'n=${Uri.encodeQueryComponent(name)}',
@@ -49,7 +67,7 @@ class PairingLink {
       if (relayUrl != null) 'r=${Uri.encodeQueryComponent(relayUrl!)}',
       if (lan.isNotEmpty) 'l=${lan.join(',')}',
     ];
-    return 'perch://pair?${q.join('&')}';
+    return q.join('&');
   }
 
   static final _hostPort = RegExp(r'^[A-Za-z0-9]([A-Za-z0-9.-]*[A-Za-z0-9])?:\d{1,5}$');
@@ -64,10 +82,17 @@ class PairingLink {
   static PairingLink? parse(String text) {
     final s = text.trim();
     final u = Uri.tryParse(s);
-    if (u == null || u.scheme != 'perch' || u.host != 'pair') return null;
+    if (u == null) return null;
     final Map<String, String> q;
     try {
-      q = u.queryParameters;
+      if (u.scheme == 'perch' && u.host == 'pair') {
+        q = u.queryParameters;
+      } else if ((u.scheme == 'https' || u.scheme == 'http') && u.path.endsWith('/pair') && u.fragment.isNotEmpty) {
+        // The web form: the same fields after `#`.
+        q = Uri.splitQueryString(u.fragment);
+      } else {
+        return null;
+      }
     } catch (_) {
       return null;
     }

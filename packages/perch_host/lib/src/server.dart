@@ -438,8 +438,10 @@ class PerchServer {
         }
         if (path == 'local/perch/pairing') {
           // The same QR code and link as the host's banner: shown in the owner's own terminal.
-          final link = state.link(name: machineName, lan: lanAddresses).toString();
-          return Response.ok(jsonEncode({'link': link, 'qr': qrText(link, border: 1), 'machine': machineName}),
+          final pairing = state.link(name: machineName, lan: lanAddresses);
+          // The code a phone's camera can open (a web address on the relay); the link to paste.
+          return Response.ok(
+              jsonEncode({'link': pairing.toString(), 'qr': qrText(pairing.qrText, border: 1), 'machine': machineName}),
               headers: json);
         }
         final api = localBoard;

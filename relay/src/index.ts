@@ -2,6 +2,7 @@
 // /b/<board id>/... to that board's store.
 import { BOARD_ID_PATTERN, MACHINE_ID_PATTERN } from "./protocol";
 import type { Env } from "./machine";
+import { assetLinks, pairPage } from "./pair_page";
 
 export { MachineRelay } from "./machine";
 export { BoardStore } from "./board";
@@ -11,6 +12,9 @@ export type { Env } from "./machine";
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
+    // A phone camera scanning a pairing QR code (the app claims /pair when installed).
+    if (url.pathname === "/pair" && request.method === "GET") return pairPage(env);
+    if (url.pathname === "/.well-known/assetlinks.json") return assetLinks(env);
     if (url.pathname === "/" || url.pathname === "") {
       return new Response("Perch relay\n", { headers: { "Content-Type": "text/plain" } });
     }

@@ -14,10 +14,11 @@ import {
   tokenOf,
 } from "./protocol";
 import type { BoardStore } from "./board";
+import type { PairPageEnv } from "./pair_page";
 import { REQUEST_UNITS, type RelayAdmin } from "./admin";
 import { FcmPushSender, parseServiceAccount, PushSender, UnconfiguredPushSender } from "./push";
 
-export interface Env {
+export interface Env extends PairPageEnv {
   MACHINE: DurableObjectNamespace<MachineRelay>;
   BOARD: DurableObjectNamespace<BoardStore>;
   ADMIN: DurableObjectNamespace<RelayAdmin>;

@@ -37,17 +37,20 @@ bool showQrInBanner(HostState s) => s.createdNow || !s.everPaired;
 /// The pairing QR code as text, the link to paste, and where its picture is saved (the
 /// picture is written to the state folder).
 List<String> pairingLines(HostState state, {required String name, required List<String> lan}) {
-  final link = state.link(name: name, lan: lan).toString();
+  final pairing = state.link(name: name, lan: lan);
+  final link = pairing.toString();
+  // With a relay the code is a web address on it, so a phone's camera opens the app too.
+  final qr = pairing.qrText;
   var saved = '';
   try {
-    File(state.pngPath).writeAsBytesSync(qrPng(link));
+    File(state.pngPath).writeAsBytesSync(qrPng(qr));
     saved = 'The same code is saved as a picture: ${state.pngPath}';
   } catch (e) {
     saved = 'Could not save the picture: $e';
   }
   return [
-    'Pair a device: in the Perch app tap Add machine and scan this code.',
-    qrText(link),
+    "Pair a device: scan this code with the phone's camera (or in the Perch app: Add machine).",
+    qrText(qr),
     'On a desktop or in a browser, paste this link instead (keep it private, it is the key):',
     link,
     saved,

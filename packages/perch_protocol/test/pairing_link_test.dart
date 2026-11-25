@@ -59,4 +59,31 @@ void main() {
     expect(base64UrlDecodeNoPad('-_8'), [0xfb, 0xff]);
     expect(base64UrlDecodeNoPad('!!'), isNull);
   });
+
+  test('with a relay the QR holds a web address on it; the secret stays after the #', () {
+    final link = PairingLink(
+      name: 'Desk PC',
+      machineId: 'AAECAwQFBgcICQoLDA0ODw',
+      secret: secret,
+      relayUrl: 'https://perch-relay.example.workers.dev/',
+      lan: const ['192.168.1.20:8787'],
+    );
+    final web = link.qrText;
+    expect(web, startsWith('https://perch-relay.example.workers.dev/pair#v=1&'));
+    final u = Uri.parse(web);
+    expect(u.query, isEmpty, reason: 'nothing a server would see');
+    expect(u.path, '/pair');
+    final back = PairingLink.parse(web)!;
+    expect(back.secret, secret);
+    expect(back.relayUrl, 'https://perch-relay.example.workers.dev/');
+    expect(back.lan, ['192.168.1.20:8787']);
+    // The perch:// form still parses, and a host without a relay keeps it in its QR.
+    expect(PairingLink.parse(link.toString())!.machineId, 'AAECAwQFBgcICQoLDA0ODw');
+    final lanOnly = PairingLink(name: 'Box', machineId: 'AAECAwQFBgcICQoLDA0ODw', secret: secret);
+    expect(lanOnly.webUrl, isNull);
+    expect(lanOnly.qrText, startsWith('perch://pair?'));
+    // Other web addresses are not pairing links.
+    expect(PairingLink.parse('https://example.com/pair'), isNull);
+    expect(PairingLink.parse('https://example.com/other#v=1'), isNull);
+  });
 }

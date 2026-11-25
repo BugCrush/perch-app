@@ -14,6 +14,8 @@ import 'src/push/push_notes.dart';
 import 'src/push/push_service.dart';
 import 'src/state/providers.dart';
 import 'src/state/session_prefs.dart';
+import 'src/connection/pair_links.dart';
+import 'src/ui/add_machine_screen.dart';
 import 'src/ui/app_lock.dart';
 import 'src/ui/drafts.dart';
 import 'src/ui/app_menu.dart' show appVersion;
@@ -162,6 +164,7 @@ class _PerchAppState extends ConsumerState<PerchApp> {
   late final AppLifecycleListener _lifecycle;
   late final PushService _push;
   StreamSubscription<dynamic>? _reports;
+  final _pairLinks = PairLinks();
 
   @override
   void initState() {
@@ -171,6 +174,12 @@ class _PerchAppState extends ConsumerState<PerchApp> {
     _push.taps.addListener(_openTapped);
     // A tap that arrived while the app was locked is opened once it is unlocked.
     AppLock.locked.addListener(_openTapped);
+    // A pairing QR code scanned by the phone's camera opens Add machine with its link.
+    if (!kIsWeb) {
+      _pairLinks.pending.addListener(_openPairLink);
+      AppLock.locked.addListener(_openPairLink);
+      unawaited(_pairLinks.start());
+    }
     // The host sends no notification for the session in front of the owner, and none is
     // in front of them while the app is in the background.
     _lifecycle = AppLifecycleListener(onStateChange: (s) {
@@ -196,6 +205,8 @@ class _PerchAppState extends ConsumerState<PerchApp> {
       _askOnce(machines);
     }, fireImmediately: true);
     WidgetsBinding.instance.addPostFrameCallback((_) => _openTapped());
+    // A link that started the app arrives before the first screen: opened after it.
+    WidgetsBinding.instance.addPostFrameCallback((_) => _openPairLink());
     // A session that resumed after a usage limit but not the same way: a 15-second toast.
     _reports = ref.read(connectionsProvider).resumeReports.listen((r) {
       if (!r.report.changed) return;
@@ -215,6 +226,8 @@ class _PerchAppState extends ConsumerState<PerchApp> {
   void dispose() {
     _push.taps.removeListener(_openTapped);
     AppLock.locked.removeListener(_openTapped);
+    _pairLinks.pending.removeListener(_openPairLink);
+    AppLock.locked.removeListener(_openPairLink);
     _reports?.cancel();
     _lifecycle.dispose();
     super.dispose();
@@ -230,6 +243,14 @@ class _PerchAppState extends ConsumerState<PerchApp> {
       final ctx = _navigator.currentContext;
       if (ctx != null) _push.askOnce(ctx);
     });
+  }
+
+  /// Opens Add machine with a pairing link the camera opened (after the app lock).
+  void _openPairLink() {
+    final nav = _navigator.currentState;
+    if (nav == null || AppLock.locked.value || _pairLinks.pending.value == null) return;
+    final link = _pairLinks.take()!;
+    nav.push(glassRoute<void>(AddMachineScreen(initialLink: link)));
   }
 
   /// Opens the session of a tapped notification (also from a cold start, once the saved

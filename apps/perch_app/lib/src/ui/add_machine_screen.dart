@@ -1,4 +1,5 @@
 // Adding (or pairing again) a machine: scan the QR code the host shows, or paste its link.
+import 'dart:async';
 import 'dart:io' show Platform;
 
 import 'package:flutter/foundation.dart' show kIsWeb;
@@ -38,7 +39,10 @@ Future<void> openAddMachine(BuildContext context, {String? replacing}) =>
 class AddMachineScreen extends ConsumerStatefulWidget {
   /// The id of the machine whose "Pair again" opened this screen.
   final String? replacing;
-  const AddMachineScreen({super.key, this.replacing});
+
+  /// A pairing link to use at once (the phone's camera opened Perch with it).
+  final String? initialLink;
+  const AddMachineScreen({super.key, this.replacing, this.initialLink});
 
   @override
   ConsumerState<AddMachineScreen> createState() => _AddMachineScreenState();
@@ -48,6 +52,18 @@ class _AddMachineScreenState extends ConsumerState<AddMachineScreen> {
   final _link = TextEditingController();
   String? _error;
   bool _done = false;
+
+  @override
+  void initState() {
+    super.initState();
+    final link = widget.initialLink;
+    if (link != null) {
+      _link.text = link;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) unawaited(_use(link));
+      });
+    }
+  }
 
   @override
   void dispose() {

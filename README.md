@@ -50,7 +50,7 @@ On Samsung phones: if notifications arrive late while the screen is off, set **S
 ### 3. Pair them
 
 1. In Claude Code on the computer, type `/perch` and choose **Pair your phone**. A QR code appears.
-2. In the app, tap **Add machine** and scan it.
+2. Scan it with your phone's camera: Perch opens and pairs. (Or in the app: **Add machine**, then scan.)
 3. On the computer, Perch asks whether to let the phone in: choose **Allow** (or **Watch only** for a phone that may look but not act).
 
 ### 4. The invite code (to reach your machine away from home)

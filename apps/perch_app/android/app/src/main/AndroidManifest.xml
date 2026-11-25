@@ -32,6 +32,22 @@
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
+            <!-- A machine's pairing link: perch://pair?... (pasted or opened from another app). -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.BROWSABLE"/>
+                <data android:scheme="perch" android:host="pair"/>
+            </intent-filter>
+            <!-- The QR code's web form on the relay, https://<relay>/pair#...: any phone camera
+                 opens it, and Android hands it to Perch (App Links, verified by the relay's
+                 /.well-known/assetlinks.json). The host comes from the build's default relay. -->
+            <intent-filter android:autoVerify="true">
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.BROWSABLE"/>
+                <data android:scheme="https" android:host="${perchRelayHost}" android:path="/pair"/>
+            </intent-filter>
         </activity>
         <!-- Notification buttons (Continue, Stop) that act without opening the app. -->
         <receiver android:exported="false" android:name="com.dexterous.flutterlocalnotifications.ActionBroadcastReceiver" />

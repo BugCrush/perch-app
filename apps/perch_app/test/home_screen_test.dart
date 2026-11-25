@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:perch_app/src/connection/machine_store.dart';
+import 'package:perch_app/src/connection/pair_links.dart';
 import 'package:perch_app/src/state/providers.dart';
 import 'package:perch_app/src/ui/add_machine_screen.dart';
 import 'package:perch_app/src/ui/app_menu.dart';
@@ -108,6 +109,37 @@ void main() {
     await settle(tester);
     expect(find.byType(AddMachineScreen), findsNothing);
     expect(find.text('Scanned box'), findsOneWidget);
+  });
+
+  testWidgets('the QR code in its web form (a camera-friendly address on the relay) pairs too', (tester) async {
+    final web = PairingLink.parse(testLink(name: 'Web box', relay: 'https://relay.example'))!.qrText;
+    expect(web, startsWith('https://relay.example/pair#'));
+    await pumpScreen(tester, scanner: fakeScanner(() => web));
+    await addMachine(tester);
+    await tester.tap(find.text('Simulate scan'));
+    await settle(tester);
+    expect(find.byType(AddMachineScreen), findsNothing);
+    expect(find.text('Web box'), findsOneWidget);
+  });
+
+  testWidgets('Add machine opened with a link (the camera opened Perch) pairs at once', (tester) async {
+    await pumpScreen(tester);
+    final link = PairingLink.parse(testLink(name: 'Camera box', relay: 'https://relay.example'))!.qrText;
+    Navigator.of(tester.element(find.byType(HomeScreen))).push(MaterialPageRoute<void>(builder: (_) => AddMachineScreen(initialLink: link)));
+    await settle(tester);
+    expect(find.byType(AddMachineScreen), findsNothing);
+    expect(find.text('Camera box'), findsOneWidget);
+  });
+
+  test('the link listener keeps only pairing links', () {
+    final links = PairLinks();
+    links.offer('https://example.com/pair');
+    links.offer(42);
+    expect(links.pending.value, isNull);
+    final link = PairingLink.parse(testLink(relay: 'https://relay.example'))!.qrText;
+    links.offer(link);
+    expect(links.take(), link);
+    expect(links.take(), isNull, reason: 'once');
   });
 
   testWidgets('a_phase_1_machine_shows_pair_again_and_pairing_replaces_it', (tester) async {
