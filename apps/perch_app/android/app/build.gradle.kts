@@ -1,3 +1,4 @@
+import java.net.URI
 import java.util.Properties
 
 plugins {
@@ -42,7 +43,7 @@ android {
         // phone's camera): the host of PERCH_DEFAULT_RELAY (the release workflow's variable),
         // or -PperchRelayHost=<host>. Without one, a name that never resolves.
         val relayHost = (project.findProperty("perchRelayHost") as String?)?.takeIf { it.isNotBlank() }
-            ?: System.getenv("PERCH_DEFAULT_RELAY")?.let { java.net.URI(it.trim()).host }
+            ?: System.getenv("PERCH_DEFAULT_RELAY")?.let { URI(it.trim()).host }
             ?: "pair.invalid"
         manifestPlaceholders["perchRelayHost"] = relayHost
         // You can update the following values to match your application needs.
