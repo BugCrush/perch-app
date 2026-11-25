@@ -310,6 +310,11 @@ void main() {
     expect(client.status, contains('needs an invite code'));
     expect((await server.menuStatus())['relayRefusal'], 'inviteRequired');
     expect(relay.uris.map((u) => u.path.split('/').last), containsAll(['host', 'check']));
+    // A restart forgets the old answer at once (/perch reads it right after saving a code).
+    await client.stop();
+    client.start();
+    expect(client.refusal, isNull);
+    await waitUntil(() => client.refusal != null, timeout: const Duration(seconds: 10));
     // A code: the next connection carries it, and an accepted one clears the refusal.
     state.setRelayInvite(' perch-abcd-efgh-jkmn ');
     relay.checkError = null;

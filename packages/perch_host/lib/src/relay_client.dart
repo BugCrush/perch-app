@@ -205,6 +205,9 @@ class RelayClient implements RemoteTransport {
     if (_running) return;
     _running = true;
     _backoff = const Duration(seconds: 1);
+    // A refusal belongs to the attempts before: a restart (a new invite code) asks afresh,
+    // and /perch must not read the old answer as the new one.
+    refusal = null;
     unawaited(_connect());
   }
 
