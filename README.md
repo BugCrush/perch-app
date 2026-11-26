@@ -223,10 +223,20 @@ No. Everything between the phone and the computer is end-to-end encrypted with k
 
 ## Roadmap
 
-- [ ] iPhone app
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="assets/readme/roadmap-dark.svg">
+  <img src="assets/readme/roadmap-light.svg" width="100%" alt="Perch's flight path. The trail so far: waiting to get back to the desk (before Perch); Perch is born on Windows and Android (November 2026); Perch on the Mac (November 2026); Perch 1.0 (26 November 2026). You are here: the beta with friends, where Perch's bird sits by the campfire. The trail ahead: Google Play, Perch's own domain and website, a Linux host, the iPhone app, and the X that marks the spot: the public launch, Perch for everyone.">
+</picture>
+
+- [x] Perch on Windows and Android
+- [x] Perch on the Mac
+- [x] Perch 1.0
+- [ ] **Now:** the beta with friends
 - [ ] Google Play
-- [ ] Perch's own domain
+- [ ] Perch's own domain and website
 - [ ] A Linux build of the host (it runs on Linux from source today)
+- [ ] iPhone app
+- [ ] Public launch: Perch for everyone
 
 ## Build it yourself
 

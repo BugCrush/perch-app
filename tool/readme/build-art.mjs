@@ -482,8 +482,234 @@ function usingPerch(t) {
   return svgDoc(W, H, b, { bg: t.bg, title: 'Using Perch: see every session, answer cards, start sessions, run tasks from the board, stop a session or get a push', radius: 22 });
 }
 
+// ---------------------------------------------------------------------------------------
+// The roadmap as Perch's flight path, 1280 x 830.
+
+function roadMap(t0) {
+  const sk = sketch(91);
+  const W = 1280, H = 830;
+  const dark = t0.name === 'dark';
+  // The sheet: warm black with cream ink, or parchment with brown ink.
+  const t = {
+    ...t0,
+    sheet: dark ? C.ink : '#F4E2C1',
+    edge: dark ? '#5A4A3E' : '#B98F5A',
+    line: dark ? '#EADBCB' : '#3A2A1C',
+    text: dark ? C.cream : '#2A1E14',
+    quiet: dark ? '#A8968A' : '#806A55',
+    panel: dark ? '#211C18' : '#F8EBD2',
+    hatch: dark ? '#3A2E27' : '#E6CDA3',
+    ahead: dark ? '#8C7B6E' : '#9A8166',
+  };
+  let b = '';
+
+  // A ragged, hand-torn edge.
+  let seed = 3;
+  const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+  const edge = [];
+  const m = 10;
+  const side = (x0, y0, x1, y1, n, nx, ny) => {
+    for (let i = 0; i < n; i++) {
+      const u = i / n;
+      const j = rnd() * 9;
+      edge.push([x0 + (x1 - x0) * u + nx * j, y0 + (y1 - y0) * u + ny * j]);
+    }
+  };
+  side(m, m, W - m, m, 40, 0, 1);
+  side(W - m, m, W - m, H - m, 24, -1, 0);
+  side(W - m, H - m, m, H - m, 40, 0, -1);
+  side(m, H - m, m, m, 24, 1, 0);
+  const sheetD = 'M' + edge.map(([x, y]) => `${f1(x)} ${f1(y)}`).join('L') + 'Z';
+  b += `<path d="${sheetD}" fill="${t.sheet}"/>`;
+  b += sk.path(sheetD, { stroke: t.edge, strokeWidth: 2, roughness: 0.8 });
+  if (!dark) {
+    // Age: a couple of faint stains.
+    b += `<circle cx="1010" cy="140" r="46" fill="none" stroke="${t.edge}" stroke-width="3" opacity=".18"/>`;
+    b += `<circle cx="230" cy="600" r="30" fill="${t.edge}" opacity=".07"/>`;
+  }
+
+  // Title and legend.
+  b += hand("Perch's flight path", 54, 74, 46, t.text);
+  b += handL('the road so far, and the road ahead', 56, 104, 24, t.quiet);
+  b += sk.line(58, 126, 110, 126, { stroke: C.orange, strokeWidth: 4, roughness: 0.6 });
+  b += handL('done', 120, 133, 22, t.text);
+  b += sk.line(190, 126, 242, 126, { stroke: t.ahead, strokeWidth: 3, roughness: 0.3, disableMultiStroke: true }).replace(/<path /g, '<path stroke-dasharray="2 9" ');
+  b += handL('ahead', 252, 133, 22, t.text);
+
+  // Compass rose.
+  {
+    const cx = 1180, cy = 104, r = 40;
+    b += sk.circle(cx, cy, r * 2, { stroke: t.line, strokeWidth: 1.6, roughness: 0.8 });
+    b += sk.polygon([[cx, cy - r - 10], [cx + 9, cy], [cx, cy + r + 10], [cx - 9, cy]], { stroke: t.line, strokeWidth: 1.6, fill: C.orange, fillStyle: 'solid', roughness: 0.6 });
+    b += sk.polygon([[cx - r - 10, cy], [cx, cy - 9], [cx + r + 10, cy], [cx, cy + 9]], { stroke: t.line, strokeWidth: 1.6, roughness: 0.6 });
+    b += hand('N', cx, cy - r - 16, 24, t.text, 'middle');
+  }
+
+  // Doodles, kept faint.
+  const faint = { stroke: t.quiet, strokeWidth: 1.6, roughness: 0.9 };
+  for (const [wx, wy] of [[70, 724], [130, 744], [190, 722], [1040, 620], [1080, 636]]) {
+    b += sk.curve([[wx, wy], [wx + 10, wy - 7], [wx + 20, wy], [wx + 30, wy - 7], [wx + 40, wy]], faint);
+  }
+  for (const [hx, hy] of [[560, 150], [610, 140]]) b += sk.linear([[hx - 26, hy + 20], [hx, hy - 8], [hx + 26, hy + 20]], faint);
+  const palm = (px, py, s) => {
+    let p = sk.curve([[px, py], [px + 4 * s, py - 30 * s], [px + 2 * s, py - 60 * s]], { stroke: t.quiet, strokeWidth: 2, roughness: 0.8 });
+    for (const [dx, dy] of [[-30, 6], [-22, -10], [24, -8], [30, 8], [4, -22]]) {
+      p += sk.curve([[px + 2 * s, py - 60 * s], [px + 2 * s + dx * 0.5 * s, py - 60 * s + dy * s - 8 * s], [px + 2 * s + dx * s, py - 60 * s + dy * s + 6 * s]], { stroke: t.quiet, strokeWidth: 1.8, roughness: 0.8 });
+    }
+    return p;
+  };
+  b += palm(1180, 700, 1) + palm(1216, 712, 0.75);
+
+  // The stops (base points the trail runs through).
+  const S = [
+    { x: 150, y: 270 }, // start
+    { x: 420, y: 270 }, // born
+    { x: 690, y: 270 }, // Mac
+    { x: 950, y: 270 }, // 1.0
+    { x: 1020, y: 490 }, // beta (you are here)
+    { x: 740, y: 490 }, // Google Play
+    { x: 500, y: 490 }, // domain
+    { x: 250, y: 490 }, // Linux
+    { x: 330, y: 700 }, // iPhone
+    { x: 860, y: 700 }, // X
+  ];
+  const here = 4;
+  // The trail: through every stop, winding a little between them.
+  const via = [
+    [S[0].x, S[0].y], [285, 300], [S[1].x, S[1].y], [555, 240], [S[2].x, S[2].y], [820, 300], [S[3].x, S[3].y],
+    [1110, 268], [1212, 330], [1214, 440], [1150, 492], [S[4].x, S[4].y],
+    [880, 520], [S[5].x, S[5].y], [620, 460], [S[6].x, S[6].y], [375, 520], [S[7].x, S[7].y],
+    [140, 560], [170, 660], [S[8].x, S[8].y], [600, 730], [S[9].x, S[9].y],
+  ];
+  const cut = via.findIndex(([x, y]) => x === S[here].x && y === S[here].y);
+  b += sk.curve(via.slice(0, cut + 1), { stroke: C.orange, strokeWidth: 4.2, roughness: 1 });
+  b += sk.curve(via.slice(cut), { stroke: t.ahead, strokeWidth: 3.2, roughness: 0.4, disableMultiStroke: true }).replace(/<path /g, '<path stroke-dasharray="2 10" ');
+  S.forEach((p, i) => {
+    if (i === 9) return;
+    b += i <= here
+      ? sk.circle(p.x, p.y, 13, { stroke: C.orange, strokeWidth: 2, fill: C.orange, fillStyle: 'solid', roughness: 0.5 })
+      : sk.circle(p.x, p.y, 13, { stroke: t.ahead, strokeWidth: 2, fill: t.sheet, fillStyle: 'solid', roughness: 0.5 });
+  });
+
+  const label = (p, lines, date, past) => {
+    let s = '';
+    lines.forEach((l, k) => (s += hand(l, p.x, p.y + 36 + k * 26, 27, t.text, 'middle')));
+    if (date) s += handL(date, p.x, p.y + 36 + lines.length * 26, 20, t.quiet, 'middle');
+    return s;
+  };
+  const ink = { stroke: t.line, strokeWidth: 2.2, roughness: 1 };
+
+  // 1. Before Perch: a desk, an empty chair, a terminal asking, a clock.
+  {
+    const { x, y } = S[0];
+    b += sk.line(x - 62, y - 20, x + 40, y - 20, ink) + sk.line(x - 54, y - 20, x - 54, y - 4, ink) + sk.line(x + 32, y - 20, x + 32, y - 4, ink);
+    b += sk.round(x - 52, y - 78, 84, 50, 6, { ...ink, fill: t.panel, fillStyle: 'solid' });
+    b += sk.line(x - 10, y - 28, x - 10, y - 20, ink);
+    b += hand('Allow? y/n', x - 10, y - 46, 17, t.accent, 'middle');
+    // The empty chair.
+    b += sk.linear([[x + 60, y - 70], [x + 60, y - 4]], ink) + sk.linear([[x + 60, y - 34], [x + 86, y - 34], [x + 86, y - 4]], ink);
+    // The clock.
+    b += sk.circle(x - 78, y - 96, 28, ink) + sk.linear([[x - 78, y - 106], [x - 78, y - 96], [x - 70, y - 92]], { ...ink, strokeWidth: 1.8 });
+    b += label({ x, y }, ['Waiting to get', 'back to the desk'], 'before Perch', true);
+  }
+  // 2. Perch is born: a phone talking to a computer.
+  {
+    const { x, y } = S[1];
+    b += sk.round(x - 64, y - 76, 34, 60, 7, { ...ink, fill: t.panel, fillStyle: 'solid' });
+    b += sk.round(x + 2, y - 76, 64, 42, 5, { ...ink, fill: t.panel, fillStyle: 'solid' }) + sk.line(x + 34, y - 34, x + 34, y - 20, ink) + sk.line(x + 18, y - 18, x + 50, y - 18, ink);
+    b += sk.linear([[x - 24, y - 52], [x - 14, y - 60], [x - 8, y - 46], [x - 2, y - 56]], { stroke: C.orange, strokeWidth: 2.4, roughness: 0.6 });
+    b += label({ x, y }, ['Perch is born'], 'Windows + Android · Nov 2026', true);
+  }
+  // 4. Perch 1.0: a flag on a hill.
+  {
+    const { x, y } = S[3];
+    b += sk.path(`M${x - 70} ${y - 8}Q${x} ${y - 70} ${x + 70} ${y - 8}`, { ...ink, fill: t.hatch, fillStyle: 'hachure', hachureGap: 7, fillWeight: 1.1 });
+    b += sk.line(x, y - 39, x, y - 112, { ...ink, strokeWidth: 2.6 });
+    b += sk.polygon([[x, y - 112], [x + 58, y - 98], [x, y - 82]], { stroke: C.orange, strokeWidth: 2, fill: C.orange, fillStyle: 'solid', roughness: 0.7 });
+    b += hand('1.0', x + 20, y - 90, 20, C.ink, 'middle');
+    b += label({ x, y }, ['Perch 1.0'], '26 Nov 2026', true);
+  }
+  // 3. Perch on the Mac: a laptop.
+  {
+    const { x, y } = S[2];
+    b += sk.round(x - 46, y - 82, 92, 58, 6, { ...ink, fill: t.panel, fillStyle: 'solid' });
+    b += hand('macOS', x, y - 46, 22, t.accent, 'middle');
+    b += sk.polygon([[x - 58, y - 22], [x + 58, y - 22], [x + 66, y - 10], [x - 66, y - 10]], ink);
+    b += label({ x, y }, ['Perch on the Mac'], 'Nov 2026', true);
+  }
+  // 5. Beta with friends: a camp with a fire, and the bird.
+  {
+    const { x, y } = S[4];
+    const tent = (tx, s) => sk.polygon([[tx - 30 * s, y - 10], [tx, y - 10 - 58 * s], [tx + 30 * s, y - 10]], { ...ink, fill: t.hatch, fillStyle: 'hachure', hachureGap: 6, fillWeight: 1 }) + sk.line(tx, y - 10 - 58 * s, tx, y - 10, { ...ink, strokeWidth: 1.6 });
+    b += tent(x - 70, 0.85) + tent(x - 20, 1);
+    // The fire.
+    b += sk.line(x + 26, y - 10, x + 58, y - 18, ink) + sk.line(x + 26, y - 18, x + 58, y - 10, ink);
+    b += sk.path(`M${x + 30} ${y - 18}Q${x + 34} ${y - 44} ${x + 42} ${y - 54}Q${x + 44} ${y - 36} ${x + 52} ${y - 30}Q${x + 56} ${y - 22} ${x + 54} ${y - 18}Z`, { stroke: C.orange, strokeWidth: 2, fill: C.orange, fillStyle: 'solid', roughness: 0.8 });
+    b += sk.path(`M${x + 38} ${y - 18}Q${x + 40} ${y - 30} ${x + 44} ${y - 36}Q${x + 48} ${y - 26} ${x + 48} ${y - 18}Z`, { stroke: t0.amber, strokeWidth: 1.4, fill: t0.amber, fillStyle: 'solid', roughness: 0.6 });
+    // The bird, and what it says.
+    b += `<g class="bob">${birdAt(x + 104, y - 6, 74, t)}</g>`;
+    const bx = x - 4, by = y - 178, bw = 168, bh = 52;
+    b += sk.round(bx, by, bw, bh, 22, { stroke: C.orange, strokeWidth: 2.4, fill: t.sheet, fillStyle: 'solid', roughness: 1 });
+    b += sk.linear([[bx + 116, by + bh - 2], [bx + 140, by + bh + 22], [bx + 140, by + bh - 2]], { stroke: C.orange, strokeWidth: 2.4, roughness: 0.8 });
+    b += hand('you are here!', bx + bw / 2, by + 35, 28, t.accent, 'middle');
+    b += label({ x, y }, ['Beta with friends'], 'now', false);
+  }
+  // Stops ahead are drawn a little fainter.
+  let ahead = '';
+  // 6. Google Play: a phone with a shopping bag.
+  {
+    const { x, y } = S[5];
+    ahead += sk.round(x - 26, y - 98, 52, 86, 9, { ...ink, fill: t.panel, fillStyle: 'solid' });
+    ahead += sk.polygon([[x - 12, y - 74], [x + 12, y - 74], [x + 16, y - 46], [x - 16, y - 46]], { stroke: C.orange, strokeWidth: 2, roughness: 0.6 });
+    ahead += sk.path(`M${x - 6} ${y - 70}Q${x - 6} ${y - 84} ${x} ${y - 84}Q${x + 6} ${y - 84} ${x + 6} ${y - 70}`, { stroke: C.orange, strokeWidth: 1.8, roughness: 0.5 });
+    ahead += hand('store', x, y - 26, 16, t.accent, 'middle');
+    ahead += label({ x, y }, ['Google Play'], '', false);
+  }
+  // 7. Own domain & website: a signpost and a globe.
+  {
+    const { x, y } = S[6];
+    ahead += sk.line(x - 20, y - 10, x - 20, y - 104, { ...ink, strokeWidth: 2.6 });
+    ahead += sk.polygon([[x - 64, y - 100], [x + 4, y - 100], [x + 16, y - 88], [x + 4, y - 76], [x - 64, y - 76]], { ...ink, fill: t.panel, fillStyle: 'solid' });
+    ahead += hand('www', x - 32, y - 81, 19, t.accent, 'middle');
+    ahead += sk.circle(x + 34, y - 40, 52, ink) + sk.ellipse(x + 34, y - 40, 22, 52, { ...ink, strokeWidth: 1.6 }) + sk.line(x + 8, y - 40, x + 60, y - 40, { ...ink, strokeWidth: 1.6 });
+    ahead += label({ x, y }, ['Own domain', '& website'], '', false);
+  }
+  // 8. Linux host: a terminal.
+  {
+    const { x, y } = S[7];
+    ahead += terminal(sk, x - 52, y - 92, 104, 76, t);
+    ahead += hand('> Linux', x - 40, y - 38, 21, t.accent);
+    ahead += label({ x, y }, ['Linux host'], '', false);
+  }
+  // 9. iPhone app: a phone with its notch.
+  {
+    const { x, y } = S[8];
+    ahead += sk.round(x - 27, y - 100, 54, 88, 12, { ...ink, fill: t.panel, fillStyle: 'solid' });
+    ahead += sk.line(x - 8, y - 92, x + 8, y - 92, { ...ink, strokeWidth: 3 });
+    ahead += hand('iPhone', x, y - 52, 18, t.accent, 'middle');
+    ahead += label({ x, y }, ['iPhone app'], '', false);
+  }
+  b += `<g opacity="${dark ? 0.82 : 0.86}">${ahead}</g>`;
+  // The end: X marks the spot, and the chest.
+  {
+    const { x, y } = S[9];
+    b += sk.line(x - 26, y - 26, x + 26, y + 22, { stroke: C.orange, strokeWidth: 6, roughness: 1.2 });
+    b += sk.line(x + 26, y - 26, x - 26, y + 22, { stroke: C.orange, strokeWidth: 6, roughness: 1.2 });
+    const cx = x + 64, cy = y - 54;
+    b += sk.rect(cx, cy + 22, 92, 50, { ...ink, fill: t.hatch, fillStyle: 'hachure', hachureGap: 6, fillWeight: 1.2 });
+    b += sk.path(`M${cx} ${cy + 22}Q${cx} ${cy - 6} ${cx + 46} ${cy - 6}Q${cx + 92} ${cy - 6} ${cx + 92} ${cy + 22}`, ink);
+    b += sk.rect(cx + 40, cy + 18, 12, 16, { stroke: t0.amber, strokeWidth: 2, fill: t0.amber, fillStyle: 'solid', roughness: 0.5 });
+    for (const [dx, dy] of [[100, 64], [112, 58], [106, 70]]) b += sk.circle(cx + dx, cy + dy, 12, { stroke: t0.amber, strokeWidth: 1.6, fill: t0.amber, fillStyle: 'solid', roughness: 0.6 });
+    b += hand('Public launch:', x + 110, y + 48, 29, t.accent, 'middle');
+    b += hand('Perch for everyone', x + 110, y + 76, 27, t.text, 'middle');
+  }
+
+  const css = `<style>.bob{animation:bob 1.8s ease-in-out infinite}@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}@media (prefers-reduced-motion:reduce){.bob{animation:none}}</style>`;
+  return svgDoc(W, H, css + b, { title: "Perch's flight path: waiting at the desk, Perch is born, Perch on the Mac, Perch 1.0, beta with friends (you are here), Google Play, own domain and website, Linux host, iPhone app, public launch" });
+}
+
 for (const t of Object.values(themes)) {
-  for (const [name, fn] of [['banner', banner], ['how-it-works', architecture], ['a-day-with-perch', dayStrip], ['install', installSteps], ['using-perch', usingPerch]]) {
+  for (const [name, fn] of [['banner', banner], ['how-it-works', architecture], ['a-day-with-perch', dayStrip], ['install', installSteps], ['using-perch', usingPerch], ['roadmap', roadMap]]) {
     clipN = 0;
     resetGlyphs();
     const file = path.join(out, `${name}-${t.name}.svg`);
