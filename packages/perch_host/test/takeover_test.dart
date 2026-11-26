@@ -201,6 +201,58 @@ void main() {
     expect(external.kills, [5555, 6666]);
   });
 
+  // Mac, 2026-11-26: after the hand-back the host's own copy (stopped by it) sent its
+  // SessionEnd hook; it carries the same session id and marked the terminal's live session
+  // as stopped for good.
+  test('the_hosts_own_session_end_after_a_hand_back_does_not_end_the_terminal_session', () async {
+    terminalEntry();
+    await manager.list();
+    // The terminal's claude, ended by the take-over, says so while still listed as external.
+    await manager.handleHook({'hook_event_name': 'SessionEnd', 'session_id': sid, 'cwd': work.path, 'reason': 'other'});
+    await manager.takeOver(sid);
+    terminalEntry(pid: 6666);
+    expect((await summaryOf(sid)).state, SessionState.idle);
+    await manager.handleHook({
+      'hook_event_name': 'SessionStart',
+      'session_id': sid,
+      'cwd': work.path,
+      'source': 'resume',
+    });
+    await manager.handleHook({
+      'hook_event_name': 'SessionEnd',
+      'session_id': sid,
+      'cwd': work.path,
+      'reason': 'other',
+    });
+    final s = await summaryOf(sid);
+    expect(s.state, isNot(SessionState.stopped));
+    expect(s.live, isTrue);
+  });
+
+  // Windows, 2026-11-26: a `claude.cmd` (npm's shim, or a test wrapper) runs through cmd.exe,
+  // so the host's copy is listed by Claude Code (as interactive) under the pid of the real
+  // claude.exe, a child of the process the host started. That was taken for the owner's
+  // `claude --resume` 5 s after every take-over: "Continued in the terminal", copy stopped.
+  test('the_hosts_own_copy_listed_under_a_child_pid_is_no_hand_back', () async {
+    terminalEntry();
+    await manager.list();
+    await manager.takeOver(sid);
+    external.ownChildren.add(7777);
+    terminalEntry(pid: 7777);
+    final s = await summaryOf(sid);
+    expect(s.origin, SessionOrigin.perch);
+    expect(manager.history(sid).events.whereType<Notice>().last.text, takeOverNotice);
+    expect((await manager.list()).where((x) => x.id == sid).length, 1);
+    // A real terminal resume (not our child) still hands back, also while Claude Code still
+    // lists our copy first (live on Windows: both listed, ours first).
+    external.entries = [
+      external.entry(pid: 7777, sessionId: sid, cwd: work.path, name: 'example'),
+      external.entry(pid: 6666, sessionId: sid, cwd: work.path, name: 'example'),
+    ];
+    expect((await summaryOf(sid)).origin, SessionOrigin.external);
+    expect(manager.history(sid).events.whereType<Notice>().last.text, handBackNotice);
+  });
+
   test('hand_back_restarts_tailer_from_end', () async {
     terminalEntry();
     await manager.list();
@@ -263,6 +315,33 @@ void main() {
     await expectLater(manager.send(sid, 'hi'), throwsA(isA<CannotType>()));
     expect(typer.calls, isEmpty);
     expect(external.kills, isEmpty);
+  });
+
+  // Mac, 2026-11-26: Claude Code's own question after a turn (no hook, so no card) was on
+  // the screen; the phone's message was pasted into it and its Enter chose "Yes".
+  test('a_terminal_showing_a_claude_code_dialog_gets_nothing_typed', () async {
+    terminalEntry();
+    String fixture(String name) =>
+        File('test${Platform.pathSeparator}fixtures${Platform.pathSeparator}screens${Platform.pathSeparator}$name')
+            .readAsStringSync();
+    typer.currentScreen = fixture('auto_mode_setup_2_1_332.txt');
+    await manager.list();
+    await expectLater(manager.send(sid, 'hi'), throwsA(isA<TerminalShowsDialog>()));
+    expect(typer.calls, isEmpty);
+    expect(typer.actions.where((a) => a.startsWith('keys') || a == 'enter'), isEmpty);
+    expect(external.kills, isEmpty);
+
+    // The input box again: typed as before.
+    typer.currentScreen = fixture('idle.txt');
+    await manager.send(sid, 'hi');
+    expect(typer.calls.single.text, 'hi');
+
+    // A screen that cannot be read does not stop the message (as before).
+    typer
+      ..currentScreen = null
+      ..calls.clear();
+    await manager.send(sid, 'again');
+    expect(typer.calls.single.text, 'again');
   });
 
   test('pid_less_session_raises_cannot_type', () async {

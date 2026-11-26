@@ -616,6 +616,16 @@ void main() {
       studio.send(Sessions(sessions: _studio, usage: _usage(0.42, 0.18)));
       await tester.runAsync(() => pump(60));
       await tester.pumpAndSettle();
+
+      // The first screen with both machines' Claude Code checked (the README's picture).
+      studio.send(const CompatibilityMessage(
+          compatibility: Compatibility(status: CompatibilityStatus.ok, claudeVersion: '2.1.330')));
+      await tester.runAsync(() => pump(60));
+      await tester.pumpAndSettle();
+      await shot('home-checked');
+      studio.send(const CompatibilityMessage(compatibility: _untested));
+      await tester.runAsync(() => pump(60));
+      await tester.pumpAndSettle();
     }
 
     // The bird: its flap and its wink, on the first screen (light).

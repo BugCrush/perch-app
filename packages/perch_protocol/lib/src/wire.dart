@@ -23,6 +23,10 @@ abstract final class ErrorCodes {
   /// The host could not answer a card in a terminal session (the screen was not what it
   /// expected); the owner answers it at the machine. The card stays open.
   static const cannotAnswerInTerminal = 'cannotAnswerInTerminal';
+
+  /// A message was not typed: the terminal shows one of Claude Code's dialogs (answer it
+  /// there first). No take-over: the dialog passes. Older apps show the message.
+  static const terminalDialog = 'terminalDialog';
   static const badRequest = 'badRequest';
 
   /// An older app asked to pair: the device waits until it is allowed at the machine,
@@ -605,6 +609,66 @@ class BoardKeyFromApp extends ClientMessage {
   Map<String, dynamic> fields() => {'boardId': boardId, 'key': key, 'keyVersion': keyVersion};
 }
 
+/// Starts uploading a file into `perch-attachments/` of a session's folder ([sessionId]) or of
+/// a folder chosen for a new session ([cwd]); exactly one of the two. [uploadId] is made by the
+/// app. Answered with [AttachAccepted] or [AttachFailed]. Full devices only.
+class AttachStart extends ClientMessage {
+  final String uploadId;
+  final String? sessionId;
+  final String? cwd;
+  final String name;
+  final int size;
+  final String mime;
+  const AttachStart(
+      {required this.uploadId, this.sessionId, this.cwd, required this.name, required this.size, this.mime = ''});
+  @override
+  String get type => 'attachStart';
+  @override
+  Map<String, dynamic> fields() => {
+        'uploadId': uploadId,
+        'sessionId': ?sessionId,
+        'cwd': ?cwd,
+        'name': name,
+        'size': size,
+        'mime': mime,
+      };
+}
+
+/// One piece of an upload: [data] is base64 of at most `attachmentPieceBytes` bytes, [index]
+/// counts from 0 in order.
+class AttachChunk extends ClientMessage {
+  final String uploadId;
+  final int index;
+  final String data;
+  const AttachChunk({required this.uploadId, required this.index, required this.data});
+  @override
+  String get type => 'attachChunk';
+  @override
+  Map<String, dynamic> fields() => {'uploadId': uploadId, 'index': index, 'data': data};
+}
+
+/// The last piece was sent; [sha256] (hex) of the whole file. Answered with [AttachDone] or
+/// [AttachFailed].
+class AttachEnd extends ClientMessage {
+  final String uploadId;
+  final String sha256;
+  const AttachEnd({required this.uploadId, required this.sha256});
+  @override
+  String get type => 'attachEnd';
+  @override
+  Map<String, dynamic> fields() => {'uploadId': uploadId, 'sha256': sha256};
+}
+
+/// Drops an unfinished upload (the host deletes what it wrote).
+class AttachCancel extends ClientMessage {
+  final String uploadId;
+  const AttachCancel({required this.uploadId});
+  @override
+  String get type => 'attachCancel';
+  @override
+  Map<String, dynamic> fields() => {'uploadId': uploadId};
+}
+
 // ---------------------------------------------------------------- host -> app
 
 sealed class HostMessage {
@@ -639,6 +703,9 @@ class Welcome extends HostMessage {
   /// The host keeps the whole board and syncs it ([BoardSummaryFromHost] follows); false from
   /// older hosts (the app then uses the task messages).
   final bool boardSync;
+
+  /// The host takes attachments ([AttachStart]); false from older hosts (no attach button).
+  final bool attachments;
   const Welcome(
       {required this.machineName,
       required this.os,
@@ -649,7 +716,8 @@ class Welcome extends HostMessage {
       this.relayUrl,
       this.lanAddresses = const [],
       this.permission,
-      this.boardSync = false});
+      this.boardSync = false,
+      this.attachments = false});
   @override
   String get type => 'welcome';
   @override
@@ -664,7 +732,53 @@ class Welcome extends HostMessage {
         'lanAddresses': lanAddresses,
         'permission': ?permission,
         if (boardSync) 'boardSync': true,
+        if (attachments) 'attachments': true,
       };
+}
+
+/// The host opened an upload; [path] is where the file will be, relative to the session's
+/// folder (`perch-attachments/<name>`, forward slashes on every platform).
+class AttachAccepted extends HostMessage {
+  final String uploadId;
+  final String path;
+  const AttachAccepted({required this.uploadId, required this.path});
+  @override
+  String get type => 'attachAccepted';
+  @override
+  Map<String, dynamic> fields() => {'uploadId': uploadId, 'path': path};
+}
+
+/// Bytes of an upload written so far (after every `attachmentAckEvery`-th piece and the last).
+class AttachProgress extends HostMessage {
+  final String uploadId;
+  final int received;
+  const AttachProgress({required this.uploadId, required this.received});
+  @override
+  String get type => 'attachProgress';
+  @override
+  Map<String, dynamic> fields() => {'uploadId': uploadId, 'received': received};
+}
+
+/// The file is complete and checked at [path].
+class AttachDone extends HostMessage {
+  final String uploadId;
+  final String path;
+  const AttachDone({required this.uploadId, required this.path});
+  @override
+  String get type => 'attachDone';
+  @override
+  Map<String, dynamic> fields() => {'uploadId': uploadId, 'path': path};
+}
+
+/// The upload was refused or went wrong; [reason] is shown as it is. Nothing is left behind.
+class AttachFailed extends HostMessage {
+  final String uploadId;
+  final String reason;
+  const AttachFailed({required this.uploadId, required this.reason});
+  @override
+  String get type => 'attachFailed';
+  @override
+  Map<String, dynamic> fields() => {'uploadId': uploadId, 'reason': reason};
 }
 
 /// The host's [Compatibility] changed.
@@ -1391,6 +1505,24 @@ ClientMessage? decodeClient(String frame) {
       case 'boardKey':
         final k = _boardKey(j);
         return k == null ? null : BoardKeyFromApp(boardId: k.$1, key: k.$2, keyVersion: k.$3);
+      case 'attachStart':
+        final session = _strOrNull(j['sessionId']) ?? '';
+        final cwd = _strOrNull(j['cwd']) ?? '';
+        final size = _int(j['size']);
+        if ((session.isEmpty) == (cwd.isEmpty) || size <= 0) return null;
+        return AttachStart(
+            uploadId: _str(j['uploadId']),
+            sessionId: session.isEmpty ? null : session,
+            cwd: cwd.isEmpty ? null : cwd,
+            name: _str(j['name']),
+            size: size,
+            mime: _str(j['mime']));
+      case 'attachChunk':
+        return AttachChunk(uploadId: _str(j['uploadId']), index: _int(j['index']), data: _str(j['data']));
+      case 'attachEnd':
+        return AttachEnd(uploadId: _str(j['uploadId']), sha256: _str(j['sha256']));
+      case 'attachCancel':
+        return AttachCancel(uploadId: _str(j['uploadId']));
     }
   } catch (_) {
     return null;
@@ -1418,7 +1550,8 @@ HostMessage? decodeHost(String frame) {
                 if (a is String) a
             ],
             permission: _strOrNull(j['permission']),
-            boardSync: j['boardSync'] == true);
+            boardSync: j['boardSync'] == true,
+            attachments: j['attachments'] == true);
       case 'compatibility':
         return CompatibilityMessage(compatibility: Compatibility.fromJson(_map(j['compatibility'])));
       case 'sessions':
@@ -1553,6 +1686,14 @@ HostMessage? decodeHost(String frame) {
       case 'boardKey':
         final k = _boardKey(j);
         return k == null ? null : BoardKeyFromHost(boardId: k.$1, key: k.$2, keyVersion: k.$3);
+      case 'attachAccepted':
+        return AttachAccepted(uploadId: _str(j['uploadId']), path: _str(j['path']));
+      case 'attachProgress':
+        return AttachProgress(uploadId: _str(j['uploadId']), received: _int(j['received']));
+      case 'attachDone':
+        return AttachDone(uploadId: _str(j['uploadId']), path: _str(j['path']));
+      case 'attachFailed':
+        return AttachFailed(uploadId: _str(j['uploadId']), reason: _str(j['reason']));
     }
   } catch (_) {
     return null;

@@ -1,0 +1,22 @@
+▗ ▗   ▖ ▖  Claude Code v2.1.332
+           Haiku 5.5 · Claude Team
+ ▘▘   ▝▝   ~/Desktop/work/perch/.scratch/live1
+
+
+❯ Reply with the word OK only.
+
+⏺ OK
+
+✻ Churned for 1s · done 4:17 AM
+
+❯ /auto-mode-setup
+
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+  You already have auto-mode entries — add to them, or start fresh?
+
+  ❯ 1. Add to them (keeps your existing entries)
+    2. Start fresh (replaces the environment section)
+    3. Cancel
+
+  Enter to confirm · Esc to cancel
+───────────────────────────────────────────────────────────────────────────────────────────────────────── perch-live-1 ─

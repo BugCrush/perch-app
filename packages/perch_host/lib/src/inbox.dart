@@ -13,6 +13,8 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:perch_protocol/perch_protocol.dart' show splitAttachments;
+
 /// The sender name Perch's messages carry (the terminal shows "Message from @perch-phone").
 const perchSenderName = 'perch-phone';
 
@@ -30,13 +32,33 @@ const inboxReplyNote = 'Perch relays this message from the user\'s phone and the
 /// [text] wrapped so Claude Code shows it as a message from [perchSenderName] and keeps
 /// the text itself in the transcript line's `origin.body`. A closing tag inside the text is
 /// escaped as Claude Code does it (otherwise the wrapper would not be recognised).
-String wrapInboxText(String text) =>
-    '<$_tag from-name="$perchSenderName">\n${text.replaceAll('</$_tag', '<\\/$_tag')}\n\n$inboxReplyNote\n</$_tag>';
+String wrapInboxText(String text, {String? folder}) {
+  final note = folder == null ? null : inboxAttachmentsLine(text, folder);
+  return '<$_tag from-name="$perchSenderName">\n${text.replaceAll('</$_tag', '<\\/$_tag')}\n\n'
+      '${note == null ? '' : '$note\n\n'}$inboxReplyNote\n</$_tag>';
+}
+
+/// Starts the hidden line that names each attachment's full path (Claude Code does not
+/// expand `@` in an inbox message, and a relative path was first looked for in the wrong
+/// folder). Stripped with [inboxReplyNote] before the phone shows the message.
+const inboxAttachmentsNote = 'The attached files are on this machine at:';
+
+/// The hidden line for [text]'s `@perch-attachments/…` mentions in session [folder], or
+/// null when it mentions none.
+String? inboxAttachmentsLine(String text, String folder) {
+  final paths = splitAttachments(text).paths;
+  if (paths.isEmpty || folder.isEmpty) return null;
+  final sep = Platform.pathSeparator;
+  final base = folder.endsWith(sep) ? folder.substring(0, folder.length - 1) : folder;
+  return '$inboxAttachmentsNote ${paths.map((p) => '$base$sep${p.replaceAll('/', sep)}').join(', ')}.';
+}
 
 /// The message's text as Perch sent it, from a transcript line's `origin.body` or, failing
 /// that, from the wrapper in its content.
 String unescapeInboxBody(String body) {
-  final b = body.endsWith('\n\n$inboxReplyNote') ? body.substring(0, body.length - inboxReplyNote.length - 2) : body;
+  var b = body.endsWith('\n\n$inboxReplyNote') ? body.substring(0, body.length - inboxReplyNote.length - 2) : body;
+  final note = b.lastIndexOf('\n\n$inboxAttachmentsNote ');
+  if (note >= 0 && !b.substring(note + 2).contains('\n')) b = b.substring(0, note);
   return b.replaceAll('<\\/$_tag', '</$_tag');
 }
 
@@ -61,9 +83,9 @@ String? perchInboxText(Map<String, dynamic> line, String content) {
 bool isPerchInboxPrompt(String prompt) => prompt.contains('<$_tag from-name="$perchSenderName">');
 
 /// The JSON line that delivers [text].
-String inboxLine(String text) => '${jsonEncode({
+String inboxLine(String text, {String? folder}) => '${jsonEncode({
       'type': 'user',
-      'message': {'role': 'user', 'content': wrapInboxText(text)},
+      'message': {'role': 'user', 'content': wrapInboxText(text, folder: folder)},
     })}\n';
 
 /// Writes [line] to the Unix socket at [path]; true when it was written.
@@ -120,10 +142,10 @@ class ClaudeInbox {
 
   /// Sends [text] to the session with process id [pid]; true when it was written to its
   /// inbox (Claude Code sends no receipt).
-  Future<bool> send(int pid, String text) async {
+  Future<bool> send(int pid, String text, {String? folder}) async {
     if (!supported || text.trim().isEmpty) return false;
     final path = socketPathFor(pid);
     if (path == null) return false;
-    return _write(path, inboxLine(text));
+    return _write(path, inboxLine(text, folder: folder));
   }
 }

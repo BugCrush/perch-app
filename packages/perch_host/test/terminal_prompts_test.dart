@@ -360,6 +360,65 @@ void main() {
       expect(console.presses, ['keys:1', 'keys:2', 'keys:1']);
     });
 
+    // REAL, 2.1.332 Mac: options with long descriptions in a 16-row Terminal window; the
+    // question text, the tab row and option 1 have scrolled off the top.
+    String tall(List<String> labels) => screen('question_tall_2_1_332.txt')
+        .replaceAll('2. Green', '2. ${labels[1]}')
+        .replaceAll('3. Red', '3. ${labels[2]}');
+    const colours = ['Blue', 'Green', 'Red'];
+    const fruits = ['Apple', 'Mango', 'Strawberry'];
+    const seasons = ['Spring', 'Summer', 'Autumn'];
+
+    test('a_set_taller_than_the_terminal_is_answered_by_its_options', () async {
+      append(toolUse('toolu_T', 'AskUserQuestion', {
+        'questions': [
+          q('What is your favourite colour?', colours),
+          q('What is your favourite fruit?', fruits),
+          q('What is your favourite season?', seasons),
+        ]
+      }));
+      terminal(waitingFor: 'input needed');
+      console.currentScreen = tall(colours);
+      final p = (await card())!;
+      var step = 0;
+      console.onAction = (a) {
+        if (!a.startsWith('keys:')) return;
+        step++;
+        console.currentScreen = switch (step) {
+          1 => tall(fruits),
+          2 => tall(seasons),
+          3 => screen('question_multi_review.txt'),
+          _ => screen('idle_after_deny.txt'),
+        };
+      };
+      await manager.answerPrompt(
+          sid,
+          p.promptId,
+          const QuestionAnswer({
+            'What is your favourite colour?': 'Blue', // option 1: out of sight
+            'What is your favourite fruit?': 'Mango',
+            'What is your favourite season?': 'Autumn',
+          }));
+      expect(console.presses, ['keys:1', 'keys:2', 'keys:3', 'keys:1']);
+    });
+
+    test('a_tall_set_whose_visible_options_fit_two_questions_types_nothing', () async {
+      append(toolUse('toolu_U', 'AskUserQuestion', {
+        'questions': [
+          q('Colour for the walls?', colours),
+          q('Colour for the door?', colours),
+        ]
+      }));
+      terminal(waitingFor: 'input needed');
+      console.currentScreen = tall(colours);
+      final p = (await card())!;
+      await expectLater(
+          manager.answerPrompt(
+              sid, p.promptId, const QuestionAnswer({'Colour for the walls?': 'Red', 'Colour for the door?': 'Blue'})),
+          throwsA(isA<CannotAnswerInTerminal>()));
+      expect(console.presses, isEmpty);
+    });
+
     test('multi_select_ticks_choices_moves_right_and_submits', () async {
       append(toolUse('toolu_F', 'AskUserQuestion', {
         'questions': [

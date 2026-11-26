@@ -7,9 +7,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart' show Icons;
 import 'package:perch_protocol/perch_protocol.dart';
 
+import '../connection/attachment_upload.dart';
 import '../connection/host_connection.dart';
 import '../state/providers.dart';
 import 'accounts_screen.dart' show machineAccountIds, machineAccountName;
+import 'attachment_chips.dart';
+import 'sent_attachments.dart';
 import 'glass/dots.dart';
 import 'glass/mosaic.dart';
 import 'glass/palette.dart';
@@ -35,7 +38,10 @@ class NewSessionSheet extends StatefulWidget {
   /// "Choose account per session" is on: the sheet asks which account (null: read from
   /// the app's accounts).
   final bool? perSession;
-  const NewSessionSheet({super.key, required this.connection, this.folder, this.perSession});
+
+  /// Where attachments come from (null: the phone's photo and file pickers).
+  final AttachmentPicker? picker;
+  const NewSessionSheet({super.key, required this.connection, this.folder, this.perSession, this.picker});
   @override
   State<NewSessionSheet> createState() => _NewSessionSheetState();
 }
@@ -44,6 +50,9 @@ class _NewSessionSheetState extends State<NewSessionSheet> {
   final _prompt = TextEditingController();
   final _name = TextEditingController();
   final _model = TextEditingController();
+
+  /// Files for the first instruction, uploaded into the chosen folder.
+  late final AttachmentUploader _uploads;
 
   /// The folder chosen with "Use this folder".
   String? _folder;
@@ -100,6 +109,7 @@ class _NewSessionSheetState extends State<NewSessionSheet> {
   @override
   void initState() {
     super.initState();
+    _uploads = AttachmentUploader(conn)..addListener(_onUploads);
     conn.sessions.addListener(_onSessions);
     conn.dirListing.addListener(_onListing);
     _errors = conn.errors.listen(_onError);
@@ -177,21 +187,51 @@ class _NewSessionSheetState extends State<NewSessionSheet> {
     conn.sessions.removeListener(_onSessions);
     conn.dirListing.removeListener(_onListing);
     _errors?.cancel();
+    _uploads.dispose();
     _prompt.dispose();
     _name.dispose();
     _model.dispose();
     super.dispose();
   }
 
+  void _onUploads() {
+    if (mounted) setState(() {});
+  }
+
+  /// A new folder: the attachments sent to the old one stay there, unused.
+  void _useFolder(String path) {
+    if (path != _folder) _uploads.clear();
+    _folder = path;
+    _folderError = null;
+  }
+
+  Future<void> _attach() async {
+    final folder = _folder;
+    if (folder == null) return;
+    final picked = await pickAttachment(context, widget.picker ?? const SystemAttachmentPicker());
+    if (picked == null || !mounted || folder != _folder) return;
+    _uploads.add(name: picked.name, bytes: picked.bytes, mime: picked.mime, cwd: folder, size: picked.size);
+  }
+
+  bool get _attachmentsReady => !_uploads.uploading && !_uploads.hasFailed;
+
   void _start() {
     final folder = _folder;
-    final prompt = _prompt.text.trim();
+    final typed = _prompt.text.trim();
+    final paths = _uploads.donePaths;
     setState(() {
       _folderError = folder == null ? 'Enter a folder' : null;
-      _promptError = prompt.isEmpty ? 'Enter an instruction' : null;
+      _promptError = typed.isEmpty && paths.isEmpty ? 'Enter an instruction' : null;
       _hostError = null;
     });
-    if (folder == null || prompt.isEmpty) return;
+    if (folder == null || (typed.isEmpty && paths.isEmpty) || !_attachmentsReady) return;
+    final prompt = withAttachments(typed, paths);
+    for (final a in _uploads.items) {
+      final path = a.path;
+      if (a.state == AttachmentState.done && path != null && a.isImage) {
+        SentAttachmentCache.put(conn.machine.id, folder, path, a.bytes);
+      }
+    }
     _known = {for (final s in conn.sessions.value) s.id};
     setState(() => _waiting = true);
     conn.startSession(
@@ -284,10 +324,7 @@ class _NewSessionSheetState extends State<NewSessionSheet> {
             icon: Icons.check_rounded,
             compact: true,
             onTap: canUse
-                ? () => setState(() {
-                      _folder = l.path;
-                      _folderError = null;
-                    })
+                ? () => setState(() => _useFolder(l.path))
                 : null,
           ),
         ),
@@ -318,6 +355,23 @@ class _NewSessionSheetState extends State<NewSessionSheet> {
       _browser(context),
       const SizedBox(height: 14),
       GlassField(controller: _prompt, label: 'First instruction', minLines: 2, maxLines: 6, error: _promptError),
+      if (_folder != null && conn.attachments && conn.canControl) ...[
+        const SizedBox(height: 10),
+        if (_uploads.items.isNotEmpty)
+          AttachmentChips(
+              items: _uploads.items,
+              viaRelay: conn.route.value == LinkRoute.relay,
+              onRetry: _uploads.retry,
+              onRemove: _uploads.remove),
+        Row(children: [
+          AttachButton(key: const ValueKey('attach'), onTap: _attach),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text('Attach a photo or file for Claude to look at',
+                style: gSans(13, FontWeight.w600, color: G.muted), maxLines: 2),
+          ),
+        ]),
+      ],
       const SizedBox(height: 12),
       GlassField(controller: _name, label: 'Name (optional)'),
       const SizedBox(height: 12),
@@ -367,7 +421,11 @@ class _NewSessionSheetState extends State<NewSessionSheet> {
       const SizedBox(height: 18),
       Row(mainAxisAlignment: MainAxisAlignment.end, children: [
         if (_waiting) ...[const WorkingWave(width: 40, height: 18, bars: 8), const SizedBox(width: 14)],
-        GlassButton(label: 'Start', warm: true, icon: Icons.play_arrow_rounded, onTap: _waiting ? null : _start),
+        GlassButton(
+            label: 'Start',
+            warm: true,
+            icon: Icons.play_arrow_rounded,
+            onTap: _waiting || !_attachmentsReady ? null : _start),
       ]),
     ]);
   }

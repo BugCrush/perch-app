@@ -252,6 +252,36 @@ class HostConnection {
   /// The host keeps the whole board and syncs it (its welcome said so).
   bool get boardSync => _boardSync;
 
+  // ------------------------------------------------------------ attachments
+
+  final ValueNotifier<bool> _attachments = ValueNotifier(false);
+
+  /// The host takes attachments (its welcome said so; older hosts: no attach button).
+  bool get attachments => _attachments.value;
+
+  /// [attachments], to rebuild when a welcome changes it.
+  ValueListenable<bool> get attachmentsListenable => _attachments;
+
+  final _attachEvents = StreamController<HostMessage>.broadcast();
+  final _welcomes = StreamController<Welcome>.broadcast();
+
+  /// Every welcome: a new connection on the host (a relay-to-LAN switch, a permission change),
+  /// which drops the uploads of the one before.
+  Stream<Welcome> get welcomes => _welcomes.stream;
+
+  /// The host's answers to uploads: [AttachAccepted], [AttachProgress], [AttachDone],
+  /// [AttachFailed].
+  Stream<HostMessage> get attachmentEvents => _attachEvents.stream;
+
+  /// Sends one of the upload messages ([AttachStart], [AttachChunk], [AttachEnd],
+  /// [AttachCancel]); false when there is no link to send it on.
+  bool sendAttach(ClientMessage m) {
+    assert(m is AttachStart || m is AttachChunk || m is AttachEnd || m is AttachCancel);
+    if (_link.value != LinkState.online) return false;
+    _send(m);
+    return true;
+  }
+
   /// The host sent its board key on this connection.
   bool _hostKeySeen = false;
 
@@ -1237,10 +1267,13 @@ class HostConnection {
           :final relayUrl,
           :final lanAddresses,
           :final permission,
-          :final boardSync
+          :final boardSync,
+          :final attachments
         ):
         _permission.value = permission ?? DevicePermissions.full;
         _boardSync = boardSync;
+        _attachments.value = attachments;
+        if (!_welcomes.isClosed) _welcomes.add(m);
         _hostKeySeen = false;
         _awaitingBoardAnswer = false;
         if (_permission.value != DevicePermissions.full) _devices.value = null;
@@ -1372,6 +1405,8 @@ class HostConnection {
         unawaited(_onBoardRecords(records));
       case BoardKeyFromHost(:final boardId, :final key, :final keyVersion):
         unawaited(_onBoardKey(boardId, key, keyVersion));
+      case AttachAccepted() || AttachProgress() || AttachDone() || AttachFailed():
+        if (!_attachEvents.isClosed) _attachEvents.add(m);
     }
   }
 
@@ -1480,5 +1515,8 @@ class HostConnection {
     _commands.close();
     _files.close();
     _searches.close();
+    _attachEvents.close();
+    _welcomes.close();
+    _attachments.dispose();
   }
 }

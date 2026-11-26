@@ -33,6 +33,9 @@ const int historyPageSize = 300;
 
 const takeOverNotice = 'Continued on phone. To take it back, run claude --resume in the terminal.';
 const handBackNotice = 'Continued in the terminal.';
+
+/// How long after a hand-back a `SessionEnd` hook is taken for the host's own copy's.
+const handBackEndGrace = Duration(seconds: 15);
 const trustReason = 'Trust this folder on the machine to continue';
 
 class NoSuchSession implements Exception {
@@ -58,6 +61,14 @@ class SessionBusy implements Exception {
 class CannotType implements Exception {
   final String message;
   CannotType(this.message);
+  @override
+  String toString() => message;
+}
+
+/// A phone message was not typed: the terminal shows one of Claude Code's dialogs.
+class TerminalShowsDialog implements Exception {
+  final String message;
+  TerminalShowsDialog(this.message);
   @override
   String toString() => message;
 }
@@ -139,6 +150,14 @@ class _Session {
   String? hookReason;
   DateTime? hookStateAt;
   bool hookEnded = false;
+
+  /// When the owner resumed this taken-over session in a terminal: the host's own copy,
+  /// stopped then, still sends a `SessionEnd` with the same session id.
+  DateTime? handedBackAt;
+
+  /// The host's own copy as Claude Code lists it when it runs under a `.cmd` shim: the
+  /// claude.exe ([child]) under the process the host started ([parent]).
+  ({int parent, int child})? copyChild;
 
   /// Bumped whenever a hook closes the card (a slower hook in flight must not reopen it).
   int closeSeq = 0;
@@ -472,9 +491,20 @@ class SessionManager implements PushSource {
     for (final s in _sessions.values.toList()) {
       if (s.origin != SessionOrigin.perch || !s.takenOver || s.claudeId == null) continue;
       final ourPid = s.claude?.pid;
-      final e = entries.where((e) =>
-          e.interactive && e.claudeSessionId == s.claudeId && e.pid != null && e.pid != ourPid).firstOrNull;
-      if (e != null) await _handBack(s, e);
+      final candidates = entries.where((e) =>
+          e.interactive && e.claudeSessionId == s.claudeId && e.pid != null && e.pid != ourPid);
+      for (final e in candidates) {
+        // A `.cmd` claude (npm's shim) runs through cmd.exe: Claude Code lists the host's own
+        // copy under its claude.exe's pid, a child of [ourPid]. That is no hand-back (and it
+        // can be listed before the terminal's own resume).
+        if (ourPid != null && s.copyChild?.parent == ourPid && s.copyChild?.child == e.pid) continue;
+        if (ourPid != null && await external.descendsFrom(e.pid!, ourPid)) {
+          s.copyChild = (parent: ourPid, child: e.pid!);
+          continue;
+        }
+        await _handBack(s, e);
+        break;
+      }
     }
 
     final ourClaudeIds = <String>{};
@@ -485,6 +515,8 @@ class SessionManager implements PushSource {
       if (cid != null) ourClaudeIds.add(cid);
       final pid = s.claude?.pid;
       if (pid != null) ourPids.add(pid);
+      final child = s.copyChild;
+      if (child != null && child.parent == pid) ourPids.add(child.child);
     }
 
     final ext = <String, ExternalEntry>{};
@@ -1022,6 +1054,10 @@ class SessionManager implements PushSource {
     s
       ..origin = SessionOrigin.external
       ..takenOver = false
+      ..handedBackAt = DateTime.now()
+      // Alive again in the terminal: the end its earlier process reported at the take-over
+      // is over (and its SessionStart came while the session was still the host's).
+      ..hookEnded = false
       ..entry = e;
     s.knownPrompts.clear();
     _record(s, Notice(handBackNotice));
@@ -1278,8 +1314,17 @@ class SessionManager implements PushSource {
     final watched = s ?? _watch(entry!);
     if (watched.tailer == null) _startTailer(watched, fromEnd: false);
     if (adapter) {
+      // A dialog on the screen (one of Claude Code's own, with no card on the phone) would
+      // take the paste and its Enter would pick an option: type nothing then. A screen that
+      // cannot be read does not stop the message. Warp reads only the tab in front.
+      await typer.bringForward(pid);
+      final screen = await typer.screen(pid);
+      if (screen != null && showsDialog(screen)) {
+        throw TerminalShowsDialog('Claude Code is asking something in the terminal on this machine: '
+            'answer it there, then send your message again.');
+      }
       if (!await typer.type(pid, text)) throw CannotType('Could not type into the terminal session.');
-    } else if (!await inbox!.send(pid, text)) {
+    } else if (!await inbox!.send(pid, text, folder: entry?.summary.cwd)) {
       throw CannotType("Could not reach the session's inbox (Claude Code 2.1.224 or later is needed).");
     }
     // A new session writes its transcript only now: start reading it as soon as it is
@@ -1950,6 +1995,10 @@ class SessionManager implements PushSource {
         final prompt = j['prompt'] is String ? j['prompt'] as String : null;
         limits.ownerPrompt(s.id, prompt);
       case 'SessionEnd':
+        // Right after a hand-back the end is the host's own copy's (the listing still drops
+        // the terminal's session if that is what ended).
+        final back = s.handedBackAt;
+        if (back != null && DateTime.now().difference(back) < handBackEndGrace) return;
         _closeCard(s);
         s.stopRequestedAt = null;
         s.hookEnded = true;

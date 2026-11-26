@@ -201,7 +201,7 @@ void main() {
   });
 
   test('the_app_turns_the_self_test_on_and_off_and_sees_it', () async {
-    manager.compatibility.setVersion('2.1.332');
+    manager.compatibility.setVersion('2.1.340');
     await startServer();
     final c = await paired();
     expect(c.received.whereType<Welcome>().single.compatibility!.selfTest!.enabled, isFalse);

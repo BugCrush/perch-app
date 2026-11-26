@@ -131,9 +131,10 @@ _Dialog _parse(List<String> lines) {
   var end = _footerIndex(lines);
   if (end < 0) {
     // No footer: only a numbered option on the last line counts (below it there may be
-    // the rule that carries the session's name).
+    // the rule that carries the session's name, and Claude Code's "↑ n more lines" when it
+    // cut the dialog's top: REAL, the review step of a tall question set, 2.1.332 Windows).
     var last = lines.length - 1;
-    while (last > 0 && _isRule(lines[last])) {
+    while (last > 0 && (_isRule(lines[last]) || _moreLinesAbove.hasMatch(lines[last]))) {
       last--;
     }
     if (_parseNumbered(lines[last]) == null) return _noDialog;
@@ -150,9 +151,13 @@ _Dialog _parse(List<String> lines) {
   for (var i = found.length - 2; i >= 0 && out.first.o.number > 1; i--) {
     if (found[i].o.number == out.first.o.number - 1) out.insert(0, found[i]);
   }
-  if (out.first.o.number != 1) return _noDialog;
+  // A dialog taller than the terminal: Claude Code cuts its top off and says so ("↑ 7 more
+  // lines"); the run then starts at a later number (2.1.332).
+  if (out.first.o.number != 1 && !lines.any(_moreLinesAbove.hasMatch)) return _noDialog;
   return (options: [for (final f in out) f.o], firstLine: out.first.line);
 }
+
+final _moreLinesAbove = RegExp(r'^\s*↑\s*\d+\s+more lines?\s*$');
 
 /// The options of the dialog at the bottom of [screen]: the last run numbered 1..n above
 /// the dialog's footer line ("Esc to cancel", …), or at the very bottom of the screen when
@@ -265,6 +270,22 @@ DialogKind detectDialog(String screen) {
   }
   return DialogKind.none;
 }
+
+/// Whether Claude Code shows a dialog on [screen], known to Perch or not (its own questions
+/// after a turn, such as "Teach auto mode about your environment?", have no hook and no
+/// card). Text typed then goes into the dialog and its Enter picks an option.
+bool showsDialog(String screen) {
+  final lines = _lines(screen);
+  if (_parse(lines).options.isNotEmpty) return true;
+  final footer = _footerIndex(lines);
+  if (footer >= 0 && footer >= lines.length - 3) return true;
+  // A panel such as `/status` or `/config` (footer "Esc to close"): typed text vanishes into
+  // it. Not drift ([screenDrift] keeps to [_footer]): such panels have no choices to read.
+  final last = lines.length - 3 < 0 ? 0 : lines.length - 3;
+  return lines.skip(last).any(_panelFooter.hasMatch);
+}
+
+final _panelFooter = RegExp(r'Esc to close', caseSensitive: false);
 
 /// Why [screen] looks like a dialog Perch can no longer read (a sign Claude Code changed),
 /// or null: options that parse but fit no known dialog, or a dialog footer at the bottom

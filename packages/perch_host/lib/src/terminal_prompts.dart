@@ -243,6 +243,39 @@ class TerminalAnswerer {
 
   /// The option for [label]: the same text, or (for a long label cut off on screen) the
   /// only option whose text starts it.
+  /// Whether [screen] shows question [q] of the set [all]: its text above the options, or,
+  /// when a dialog taller than the terminal has pushed the text (and the first options) off
+  /// the top, options that sit at exactly [q]'s numbers and fit no other question of the
+  /// set. Perch never presses a key for a question it cannot tell apart.
+  static bool _showsQuestion(String screen, Map<String, dynamic> q, List<Map<String, dynamic>> all,
+      List<String> Function(Map<String, dynamic>) labelsOf) {
+    if (detectDialog(screen) != DialogKind.question) return false;
+    final text = '${q['question'] ?? ''}';
+    if (dialogShows(screen, text)) return true;
+    final options = parseDialogOptions(screen);
+    if (!_optionsFit(options, labelsOf(q))) return false;
+    return all.where((o) => !identical(o, q)).every((o) => !_optionsFit(options, labelsOf(o)));
+  }
+
+  /// The visible numbered options are the question's [labels] at their own numbers (at
+  /// least one of them), followed only by Claude Code's own "Type something" / "Chat about
+  /// this" rows.
+  static bool _optionsFit(List<DialogOption> options, List<String> labels) {
+    if (labels.isEmpty || options.isEmpty) return false;
+    var own = 0;
+    for (final o in options) {
+      if (!o.numbered) return false;
+      if (o.number <= labels.length) {
+        final want = labels[o.number - 1];
+        if (o.label != want && !(o.label.length >= 8 && want.startsWith(o.label))) return false;
+        own++;
+      } else if (!o.label.startsWith('Type something') && !o.label.startsWith('Chat about this')) {
+        return false;
+      }
+    }
+    return own > 0;
+  }
+
   static DialogOption? _optionFor(List<DialogOption> options, String label) {
     final exact = _option(options, (l) => l == label);
     if (exact != null) return exact;
@@ -346,22 +379,28 @@ class TerminalAnswerer {
         (questions.length > 1 || questions.any((q) => q['multiSelect'] == true));
     var s = await _screen();
     final first = s;
+    List<String> labelsOf(Map<String, dynamic> q) => [
+          for (final o in (q['options'] is List ? q['options'] as List : const []))
+            if (o is Map && o['label'] is String) o['label'] as String
+        ];
     for (var i = 0; i < questions.length; i++) {
       final q = questions[i];
       final text = '${q['question'] ?? ''}';
       final answer = a.answers[text] ?? _fail('No answer for "$text".');
-      if (detectDialog(s) != DialogKind.question || !dialogShows(s, text)) {
+      if (!_showsQuestion(s, q, questions, labelsOf)) {
         _fail('The terminal is not showing the question "$text".');
       }
       final options = parseDialogOptions(s);
-      final labels = [
-        for (final o in (q['options'] is List ? q['options'] as List : const []))
-          if (o is Map && o['label'] is String) o['label'] as String
-      ];
+      final labels = labelsOf(q);
       if (q['multiSelect'] == true) {
         await _multiSelect(s, labels, answer, text);
       } else {
-        final o = labels.contains(answer) ? _optionFor(options, answer) : null;
+        var o = labels.contains(answer) ? _optionFor(options, answer) : null;
+        // A tall dialog: the option scrolled out of sight sits at the card's number (the
+        // visible ones were checked to be at theirs).
+        if (o == null && labels.contains(answer) && !dialogShows(s, text)) {
+          o = DialogOption(number: labels.indexOf(answer) + 1, label: answer, selected: false);
+        }
         if (labels.contains(answer) && o == null) _fail('The terminal does not show "$answer".');
         if (o != null) {
           await _choose(o);
@@ -377,8 +416,9 @@ class TerminalAnswerer {
         }
       }
       if (i + 1 < questions.length) {
-        final next = '${questions[i + 1]['question'] ?? ''}';
-        s = await _waitFor((x) => detectDialog(x) == DialogKind.question && dialogShows(x, next)) ??
+        final nextQ = questions[i + 1];
+        final next = '${nextQ['question'] ?? ''}';
+        s = await _waitFor((x) => _showsQuestion(x, nextQ, questions, labelsOf)) ??
             _fail('The terminal did not move on to the question "$next".');
       }
     }

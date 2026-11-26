@@ -356,7 +356,7 @@ void main() {
   });
 
   test('answered_cards_and_a_clean_transcript_are_evidence_for_an_unchecked_version', () async {
-    manager.compatibility.setVersion('2.1.332');
+    manager.compatibility.setVersion('2.1.340');
     listing();
     await manager.list();
     manager.history(sid); // reads the transcript: no unreadable lines

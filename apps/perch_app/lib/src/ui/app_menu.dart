@@ -24,7 +24,7 @@ import 'projects_screen.dart';
 import 'update_notice.dart' show versionLine;
 
 /// The app's version as the menu shows it (pubspec.yaml).
-const appVersion = '1.0.0';
+const appVersion = '1.1.0';
 
 /// What a machine's Claude Code checks say now, in a few words.
 String checksLine(HostConnection c) {

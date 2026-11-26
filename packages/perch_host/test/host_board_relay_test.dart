@@ -217,4 +217,18 @@ void main() {
     final lines = await relayUsageLines(state, http: (m, u, h, b) async => (status: 200, body: answer));
     expect(lines[1], "Shared pool today: 82% used; this machine is the relay owner's and keeps working.");
   });
+
+  // Mac, 2026-11-26: a machine new to a relay that wants invites was told "an older relay
+  // has no usage count".
+  test('usage_of_a_machine_the_relay_has_not_accepted_says_why', () async {
+    final state = HostState.load(tmp.path)..relayUrl = 'https://relay.example';
+    Future<List<String>> answer(int status, String body) =>
+        relayUsageLines(state, http: (m, u, h, b) async => (status: status, body: body));
+    expect((await answer(400, '{"error":"deviceTokenHashRequired"}')).first,
+        'This machine: the relay has not accepted it yet (it connects once remote access is on; '
+        'a relay that wants an invite code needs one: /perch, or perch_host relay invite <code>).');
+    expect((await answer(403, '{"error":"inviteInvalid"}')).first,
+        'This machine: the relay refuses it (inviteInvalid): /perch, or perch_host relay invite <code>.');
+    expect((await answer(404, 'Not found')).first, 'This machine: the relay answered 404 (an older relay has no usage count).');
+  });
 }

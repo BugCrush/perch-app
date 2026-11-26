@@ -8,6 +8,51 @@ String screen(String name) =>
         .readAsStringSync();
 
 void main() {
+  test('shows_dialog_for_every_dialog_and_never_at_the_input_box', () {
+    // REAL, 2.1.332 Mac: a dialog of Claude Code's own that Perch has no kind for.
+    expect(detectDialog(screen('auto_mode_setup_2_1_332.txt')), DialogKind.none);
+    expect(showsDialog(screen('auto_mode_setup_2_1_332.txt')), isTrue);
+    expect(showsDialog(screen('idle.txt')), isFalse);
+    expect(showsDialog(screen('idle_after_deny.txt')), isFalse);
+    final dir = Directory('test${Platform.pathSeparator}fixtures${Platform.pathSeparator}screens');
+    for (final f in dir.listSync().whereType<File>()) {
+      final name = f.uri.pathSegments.last;
+      if (name.startsWith('idle')) continue;
+      expect(showsDialog(f.readAsStringSync()), isTrue, reason: name);
+    }
+  });
+
+  test('a_review_step_with_the_more_lines_marker_under_its_options_parses', () {
+    // REAL, 2.1.332 Windows console: a question set taller than the window, all three steps
+    // answered from the phone; the review has no footer row and Claude Code's "↑ 5 more lines"
+    // stays below its options. The answerer then said "did not show the answers to submit".
+    final s = screen('question_review_tall_2_1_332_windows.txt');
+    expect(parseDialogOptions(s).map((o) => '${o.number} ${o.label}'), ['1 Submit answers', '2 Cancel']);
+    expect(isReviewScreen(s), isTrue);
+    expect(showsDialog(s), isTrue);
+  });
+
+  test('a_panel_such_as_status_counts_as_a_dialog_but_is_not_drift', () {
+    // REAL (account lines replaced), 2.1.332 Windows: `/status` open. A phone message typed
+    // into it vanished (no user message, no error), so the host must refuse to type.
+    final s = screen('status_panel_2_1_332.txt');
+    expect(showsDialog(s), isTrue);
+    expect(screenDrift(s), isNull);
+    expect(detectDialog(s), DialogKind.none);
+    // "Esc to close" elsewhere than the last rows (scrolled away) is no panel.
+    expect(showsDialog('${s.trimRight()}\n\n\n\n> \n  ? for shortcuts'), isFalse);
+  });
+
+  test('a_dialog_cut_at_the_top_with_claude_codes_more_lines_marker_still_parses', () {
+    // REAL, 2.1.332 Mac, 16 rows: option 1 and the question are above "↑ 7 more lines".
+    final s = screen('question_tall_2_1_332.txt');
+    expect(parseDialogOptions(s).map((o) => '${o.number} ${o.label}'),
+        ['2 Green', '3 Red', '4 Type something.', '5 Chat about this']);
+    expect(detectDialog(s), DialogKind.question);
+    // Without the marker a run that does not start at 1 is not a dialog (as before).
+    expect(parseDialogOptions(s.replaceAll('↑ 7 more lines', '')), isEmpty);
+  });
+
   test('question_options_include_the_one_after_the_rule_and_skip_descriptions', () {
     final o = parseDialogOptions(screen('question_single.txt'));
     expect(o.map((x) => x.number), [1, 2, 3, 4]);

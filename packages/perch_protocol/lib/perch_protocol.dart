@@ -2,6 +2,7 @@
 library;
 
 export 'src/accounts.dart';
+export 'src/attachments.dart';
 export 'src/board.dart';
 export 'src/board_views.dart';
 export 'src/board_relay.dart';

@@ -85,6 +85,7 @@ Perch lets you watch and steer the Claude Code sessions running on your computer
 - 🔔 **Notifications.** When a session needs an answer or finishes, and nothing while you are at the machine.
 - ▶️ **Start sessions** in any folder, with the model you want; the terminal opens on the machine.
 - 📋 **Task board.** Projects and tasks on your phone; run a task on a machine and get Claude's report back for review. `/perch` shows the same board inside Claude Code.
+- 📎 **Attachments.** Send a photo or a file from the phone into the session's folder.
 - 🔎 **Search** every conversation on every machine.
 - ⏳ **Usage limits.** When your plan's limit hits, choose to continue when it resets, wait, or switch account.
 - 🔒 **Private by design.** The phone and the machine talk end-to-end encrypted. The relay that connects them away from home only passes sealed messages it cannot read. A new phone must be allowed at the machine (Allow, Watch only, Deny), and the app can be locked with your fingerprint, face or PIN.
@@ -173,6 +174,7 @@ If `/perch` says **"this relay needs an invite code"**, choose **Enter invite co
 - **Cards** — when Claude asks something, a card appears in the conversation (and as a notification). Questions come as a deck: one page per question, then your answers and **Submit**.
 - **New session** — on a machine, **New session**, pick the folder and model; a terminal opens there.
 - **Board** — projects and tasks. **Run on…** sends a task to a machine (a new session, or one that is idle); when Claude is done the task moves to **Review** with its report. In Claude Code, `/perch` lists the same board and can start a task in the current session.
+- **Attachments** — the paperclip beside the message field (and in **New session**) sends a photo or a file, up to 20 MB, to the session's folder (`perch-attachments/`, kept out of git); Claude looks at it with your message.
 - **Search** — every conversation on every machine.
 - **Usage limit** — when the limit hits, the card offers **Continue when available**, **Wait** or **Switch account**.
 - **Devices** — on the phone, the machine's menu lists the paired devices; remove one to lock it out.

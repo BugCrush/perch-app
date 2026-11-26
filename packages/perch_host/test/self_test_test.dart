@@ -338,7 +338,7 @@ void main() {
     external = FakeExternalSessions();
     launches = [];
     now = DateTime(2026, 11, 14, 10);
-    tracker = CompatibilityTracker(store: VersionStore.load(stateDir), clock: () => now)..setVersion('2.1.332');
+    tracker = CompatibilityTracker(store: VersionStore.load(stateDir), clock: () => now)..setVersion('2.1.340');
     onLaunch = (l) => external.entries
         .add(external.entry(pid: pid, sessionId: claudeId, cwd: l.cwd, name: selfTestSessionName));
   });
@@ -431,7 +431,7 @@ void main() {
       // The version is checked now, and stays so.
       expect(tracker.current.status, CompatibilityStatus.ok);
       expect(tracker.current.selfTest!.state, SelfTestState.passed);
-      expect(VersionStore.load(stateDir).verified, contains('2.1.332'));
+      expect(VersionStore.load(stateDir).verified, contains('2.1.340'));
     });
 
     test('removes_the_plan_file_claude_code_wrote_for_it_and_no_other', () async {
@@ -579,7 +579,7 @@ void main() {
       expect(launches, hasLength(1));
       expect(await st.maybeRun(), isNull); // checked now, and tried
       // A new version within the hour waits.
-      tracker.setVersion('2.1.333');
+      tracker.setVersion('2.1.341');
       await tracker.releaseNotesDone;
       fake();
       final st2 = tester(claude!);
@@ -598,7 +598,7 @@ void main() {
     test('a_version_tried_before_a_restart_is_not_tried_again', () async {
       tracker.store
         ..selfTestNewVersions = true
-        ..selfTestAutoTried.add('2.1.332')
+        ..selfTestAutoTried.add('2.1.340')
         ..save();
       final st = tester(fake());
       expect(await st.maybeRun(), isNull);

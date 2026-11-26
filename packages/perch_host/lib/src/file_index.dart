@@ -39,6 +39,9 @@ class FileIndex {
     return list;
   }
 
+  /// Drops [cwd]'s cached list (a new attachment there shows in the next search).
+  void forget(String cwd) => _cache.remove(Platform.isWindows || Platform.isMacOS ? cwd.toLowerCase() : cwd);
+
   /// The best [limit] matches for [query] in [cwd].
   Future<({List<FileMention> files, bool truncated})> search(String cwd, String query, {int limit = 50}) async {
     final all = await filesIn(cwd);
@@ -47,7 +50,37 @@ class FileIndex {
 
   Future<({List<FileMention> files, bool truncated})> _read(String cwd) async {
     if (cwd.isEmpty || !await Directory(cwd).exists()) return (files: const <FileMention>[], truncated: false);
-    return await _fromGit(cwd) ?? await _walk(cwd);
+    final found = await _fromGit(cwd) ?? await _walk(cwd);
+    final attached = await _attachments(cwd);
+    if (attached.isEmpty) return found;
+    final have = {for (final f in attached) f.path};
+    final rest = [for (final f in found.files) if (!have.contains(f.path)) f];
+    final room = cap - attached.length;
+    return (
+      files: [...attached, ...rest.take(room < 0 ? 0 : room)],
+      truncated: found.truncated || rest.length > room,
+    );
+  }
+
+  /// The phone's attachments in [cwd] (`perch-attachments/`, which git is told to ignore),
+  /// newest first after their folder; partial uploads left out.
+  Future<List<FileMention>> _attachments(String cwd) async {
+    final dir = '$cwd${Platform.pathSeparator}$attachmentFolder';
+    if (await FileSystemEntity.type(dir, followLinks: false) != FileSystemEntityType.directory) return const [];
+    final files = <(DateTime, String)>[];
+    try {
+      await for (final e in Directory(dir).list(followLinks: false)) {
+        if (e is! File) continue;
+        final name = e.uri.pathSegments.last;
+        if (name.startsWith('.')) continue;
+        files.add((await e.lastModified(), name));
+      }
+    } catch (_) {}
+    files.sort((a, b) => b.$1.compareTo(a.$1));
+    return [
+      const FileMention(path: attachmentFolder, dir: true),
+      for (final (_, name) in files.take(cap)) FileMention(path: '$attachmentFolder/$name'),
+    ];
   }
 
   /// git's files under [cwd] (relative to it), with their folders; null outside a repository

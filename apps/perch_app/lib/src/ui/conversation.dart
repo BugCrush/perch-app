@@ -1,6 +1,7 @@
 // A session's conversation, read like an essay: the owner's messages as pull quotes,
 // Claude's replies in serif, tools as quiet captions that open on tap, subagents as asides.
 import 'dart:convert';
+import 'dart:typed_data';
 
 import 'package:flutter/widgets.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
@@ -13,6 +14,7 @@ import 'glass/palette.dart';
 import 'glass/pressable.dart';
 import 'glass/widgets.dart';
 import 'glass/click.dart';
+import 'sent_attachments.dart';
 
 /// Whether a note says a session resumed after a usage limit but not the same way (the
 /// host writes it into the conversation; it stays as a lasting note).
@@ -106,17 +108,33 @@ class EventView extends StatelessWidget {
   /// For a ToolCall: its result, if it has arrived.
   final ToolResult? result;
 
-  const EventView(this.event, {super.key, this.result});
+  /// The machine the conversation is on and the session's folder (find the pictures this
+  /// phone sent).
+  final String? machineId;
+  final String? folder;
+
+  const EventView(this.event, {super.key, this.result, this.machineId, this.folder});
 
   @override
   Widget build(BuildContext context) {
     final e = event;
     switch (e) {
       case UserMessage(:final text):
+        final split = splitAttachments(text);
         return Container(
           padding: const EdgeInsets.only(left: 14),
           decoration: const BoxDecoration(border: Border(left: BorderSide(color: Perch.orange, width: 2.5))),
-          child: Text(text, style: gSerif(20, style: FontStyle.italic, height: 1.35)),
+          child: split.paths.isEmpty
+              ? Text(text, style: gSerif(20, style: FontStyle.italic, height: 1.35))
+              : Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  if (split.text.isNotEmpty) Text(split.text, style: gSerif(20, style: FontStyle.italic, height: 1.35)),
+                  Padding(
+                    padding: EdgeInsets.only(top: split.text.isEmpty ? 0 : 8),
+                    child: Wrap(spacing: 8, runSpacing: 8, children: [
+                      for (final p in split.paths) SentAttachmentChip(path: p, machineId: machineId, folder: folder),
+                    ]),
+                  ),
+                ]),
         );
       case AssistantText(:final text):
         return MarkdownBody(data: text, styleSheet: assistantMarkdown);
@@ -359,4 +377,61 @@ class _CommandOutputViewState extends State<CommandOutputView> {
       ),
     );
   }
+}
+
+
+/// The name an attachment had on the phone: its file name without the time Perch put in front.
+String attachmentDisplayName(String path) =>
+    path.split('/').last.replaceFirst(RegExp(r'^\d{4}-\d{2}-\d{2}_\d{4}_'), '');
+
+/// An attachment of a sent message: the picture when this phone sent it, else its name.
+class SentAttachmentChip extends StatelessWidget {
+  final String path;
+  final String? machineId;
+  final String? folder;
+  const SentAttachmentChip({super.key, required this.path, this.machineId, this.folder});
+
+  @override
+  Widget build(BuildContext context) {
+    final m = machineId;
+    final f = folder ?? '';
+    final cached = m == null ? null : SentAttachmentCache.get(m, f, path);
+    return FutureBuilder<Uint8List?>(
+      initialData: cached,
+      future: cached != null || m == null ? null : SentAttachmentCache.read(m, f, path),
+      builder: (context, snap) {
+        final bytes = snap.data;
+        if (bytes != null) {
+          return ClipRRect(
+            key: const ValueKey('sent-attachment'),
+            borderRadius: BorderRadius.circular(14),
+            child: Image.memory(bytes,
+                height: 120,
+                cacheHeight: 360,
+                fit: BoxFit.cover,
+                semanticLabel: attachmentDisplayName(path),
+                errorBuilder: (_, _, _) => _nameChip()),
+          );
+        }
+        return KeyedSubtree(key: const ValueKey('sent-attachment'), child: _nameChip());
+      },
+    );
+  }
+
+  Widget _nameChip() => Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+        decoration: BoxDecoration(
+          color: const Color(0x1FFFFFFF),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: const Color(0x33FFFFFF)),
+        ),
+        child: Row(mainAxisSize: MainAxisSize.min, children: [
+          const Icon(Icons.attach_file_rounded, size: 15, color: G.muted),
+          const SizedBox(width: 6),
+          Flexible(
+            child: Text(attachmentDisplayName(path),
+                style: gSans(13, FontWeight.w600), maxLines: 1, overflow: TextOverflow.ellipsis),
+          ),
+        ]),
+      );
 }

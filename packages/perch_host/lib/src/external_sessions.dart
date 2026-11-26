@@ -394,6 +394,37 @@ class ExternalSessions {
     } catch (_) {}
   }
 
+  /// Whether [pid] runs under [ancestor] (its child, or a few levels down): the claude.exe a
+  /// `.cmd` shim started through cmd.exe has a pid of its own.
+  Future<bool> descendsFrom(int pid, int ancestor) async {
+    var p = pid;
+    for (var level = 0; level < 4; level++) {
+      final parent = await _parentPid(p);
+      if (parent == null || parent <= 0 || parent == p) return false;
+      if (parent == ancestor) return true;
+      p = parent;
+    }
+    return false;
+  }
+
+  Future<int?> _parentPid(int pid) async {
+    try {
+      if (Platform.isWindows) {
+        final r = await Process.run('powershell', [
+          '-NoProfile',
+          '-NonInteractive',
+          '-Command',
+          '(Get-CimInstance Win32_Process -Filter "ProcessId=$pid").ParentProcessId',
+        ]);
+        return int.tryParse('${r.stdout}'.trim());
+      }
+      final r = await Process.run('ps', ['-o', 'ppid=', '-p', '$pid']);
+      return int.tryParse('${r.stdout}'.trim());
+    } catch (_) {
+      return null;
+    }
+  }
+
   /// Whether a process with this pid still runs.
   Future<bool> pidAlive(int pid) async {
     try {

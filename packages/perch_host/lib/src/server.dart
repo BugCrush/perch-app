@@ -13,6 +13,7 @@ import 'package:shelf_web_socket/shelf_web_socket.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 
 import 'approval_dialog.dart';
+import 'attachments.dart';
 import 'board_page.dart';
 import 'claude_session.dart';
 import 'dir_browser.dart';
@@ -32,7 +33,7 @@ import 'slash_commands.dart';
 import 'task_board.dart';
 import 'terminal_prompts.dart';
 
-const hostVersion = '1.0.0';
+const hostVersion = '1.1.0';
 
 /// Told to a phase 1 app (plaintext pairing code) before closing.
 const pairAgainMessage = 'This Perch host was updated. Remove this machine and pair again by scanning its QR code.';
@@ -65,6 +66,10 @@ class _Client {
 
   /// The app keeps the whole board (it sent a summary or records): board changes go to it.
   bool boardSync = false;
+
+  /// Uploads this device started and has not finished: each one's start (the store's
+  /// [AttachmentStore.begin]), which its pieces wait for.
+  final Map<String, Future<Upload?>> uploads = {};
 
   /// This connection, for not echoing a device's own board records back to it.
   final int conn = _nextConn++;
@@ -170,11 +175,13 @@ class PerchServer {
     this.pairingWait = const Duration(minutes: 5),
     SlashCommandCatalog? commands,
     FileIndex? files,
+    AttachmentStore? attachments,
     this.accessibility,
     this.onSwitch,
     this.switchCheck = const Duration(seconds: 10),
   })  : commands = commands ?? SlashCommandCatalog(),
         files = files ?? FileIndex(),
+        attachments = attachments ?? AttachmentStore(),
         relayPoster = relayPoster ?? defaultPushPoster {
     manager.machineName = machineName;
   }
@@ -268,6 +275,9 @@ class PerchServer {
 
   /// The files of a session's folder (the phone's `@` list).
   final FileIndex files;
+
+  /// Files the phone uploads into `perch-attachments/` of a session's folder.
+  final AttachmentStore attachments;
 
   /// Where the board's web page is built (null: not known; `/` says how to build it).
   final String? boardDir;
@@ -629,6 +639,7 @@ class PerchServer {
     c.closed = true;
     c.helloTimer?.cancel();
     _clients.remove(c);
+    _dropUploads(c);
     for (final w in _waiting.values) {
       if (w.client == c) w.client = null;
     }
@@ -733,6 +744,7 @@ class PerchServer {
       return;
     }
     if (!c.full && !_watchAllowed(msg)) {
+      _dropUploads(c); // switched to watch only mid-upload: nothing half-written stays
       if (!_isSync(msg)) {
         c.send(ErrorMessage(
             code: ErrorCodes.watchOnly,
@@ -778,6 +790,7 @@ class PerchServer {
         lanAddresses: lanAddresses,
         permission: c.permission,
         boardSync: board != null,
+        attachments: true,
       );
 
   /// The first message: lets the device in, makes it wait for approval, or refuses it.
@@ -1051,6 +1064,110 @@ class PerchServer {
     }
   }
 
+  // ------------------------------------------------------------ attachments
+
+  /// Opens an upload. Its pieces may arrive before the start finished: each waits for it, in
+  /// the order they came (the store keeps each upload's writes in order).
+  void _attachStart(_Client c, AttachStart m) {
+    final id = m.uploadId;
+    if (c.uploads.containsKey(id)) {
+      c.send(AttachFailed(uploadId: id, reason: AttachmentReasons.wentWrong));
+      return;
+    }
+    Future<Upload> start() async {
+      final String folder;
+      if (m.sessionId != null) {
+        final cwd = manager.summaryOf(m.sessionId!)?.cwd ?? '';
+        if (cwd.isEmpty || !Directory(cwd).existsSync()) throw const AttachmentRefused(AttachmentReasons.sessionEnded);
+        folder = cwd;
+      } else {
+        folder = m.cwd!;
+        if (!Directory(folder).existsSync()) throw const AttachmentRefused('That folder does not exist');
+      }
+      return attachments.begin(uploadId: id, folder: folder, name: m.name, size: m.size);
+    }
+
+    late final Future<Upload?> started;
+    started = start().then<Upload?>((u) {
+      if (c.closed || !identical(c.uploads[id], started)) {
+        unawaited(attachments.cancel(id)); // dropped or cancelled meanwhile
+        return null;
+      }
+      c.send(AttachAccepted(uploadId: id, path: u.path));
+      return u;
+    }, onError: (Object e) {
+      if (identical(c.uploads[id], started)) _attachFailed(c, id, e);
+      return null;
+    });
+    c.uploads[id] = started;
+  }
+
+  void _attachChunk(_Client c, String id, int index, String data) {
+    final started = c.uploads[id];
+    if (started == null) {
+      c.send(AttachFailed(uploadId: id, reason: AttachmentReasons.wentWrong));
+      return;
+    }
+    List<int> bytes;
+    try {
+      bytes = base64Decode(data);
+    } on FormatException {
+      bytes = const [];
+    }
+    final bad = bytes.isEmpty || bytes.length > attachmentPieceBytes;
+    unawaited(started.then((u) async {
+      if (u == null || !identical(c.uploads[id], started)) return;
+      if (bad) throw const AttachmentRefused(AttachmentReasons.wentWrong);
+      final written = await attachments.add(id, index, bytes);
+      final pieces = index + 1;
+      if (pieces % attachmentAckEvery == 0 || written == u.size) {
+        c.send(AttachProgress(uploadId: id, received: written));
+      }
+    }).catchError((Object e) {
+      if (identical(c.uploads[id], started)) {
+        c.uploads.remove(id);
+        unawaited(attachments.cancel(id));
+        _attachFailed(c, id, e);
+      }
+    }));
+  }
+
+  void _attachEnd(_Client c, String id, String sha256) {
+    final started = c.uploads[id];
+    if (started == null) {
+      c.send(AttachFailed(uploadId: id, reason: AttachmentReasons.wentWrong));
+      return;
+    }
+    unawaited(started.then((u) async {
+      if (u == null || !identical(c.uploads[id], started)) return;
+      final path = await attachments.finish(id, sha256);
+      c.uploads.remove(id);
+      files.forget(u.folder); // the @ list shows it at once
+      c.send(AttachDone(uploadId: id, path: path));
+    }).catchError((Object e) {
+      if (identical(c.uploads[id], started)) {
+        c.uploads.remove(id);
+        unawaited(attachments.cancel(id));
+        _attachFailed(c, id, e);
+      }
+    }));
+  }
+
+  void _attachFailed(_Client c, String id, Object e) {
+    c.uploads.remove(id);
+    c.send(AttachFailed(uploadId: id, reason: e is AttachmentRefused ? e.reason : AttachmentReasons.wentWrong));
+  }
+
+  /// Drops [c]'s unfinished uploads and their partial files.
+  void _dropUploads(_Client c) {
+    if (c.uploads.isEmpty) return;
+    final open = Map.of(c.uploads);
+    c.uploads.clear();
+    for (final e in open.entries) {
+      unawaited(e.value.then((_) => attachments.cancel(e.key), onError: (_) {}));
+    }
+  }
+
   /// What a watch-only device may send.
   static bool _watchAllowed(ClientMessage m) => switch (m) {
         Hello() ||
@@ -1207,6 +1324,15 @@ class PerchServer {
         c.send(CommandsMessage(sessionId: sessionId, commands: commands.commandsFor(cwd)));
       case SearchSessions(:final query):
         c.send(await manager.search(query));
+      case AttachStart():
+        _attachStart(c, msg);
+      case AttachChunk(:final uploadId, :final index, :final data):
+        _attachChunk(c, uploadId, index, data);
+      case AttachEnd(:final uploadId, :final sha256):
+        _attachEnd(c, uploadId, sha256);
+      case AttachCancel(:final uploadId):
+        final started = c.uploads.remove(uploadId);
+        if (started != null) unawaited(started.then((_) => attachments.cancel(uploadId)));
       case ListFiles(:final sessionId, :final query):
         final cwd = manager.summaryOf(sessionId)?.cwd ?? '';
         final found = await files.search(cwd, query, limit: 50);
@@ -1293,6 +1419,7 @@ class PerchServer {
         SessionBusy() => ErrorMessage(code: ErrorCodes.sessionBusy, message: '$e'),
         TakeoverFailed(:final message) => ErrorMessage(code: ErrorCodes.takeoverFailed, message: message),
         CannotType(:final message) => ErrorMessage(code: ErrorCodes.cannotType, message: message),
+        TerminalShowsDialog(:final message) => ErrorMessage(code: ErrorCodes.terminalDialog, message: message),
         CannotAnswerInTerminal(:final message) =>
           ErrorMessage(code: ErrorCodes.cannotAnswerInTerminal, message: message),
         ArgumentError(:final message) => ErrorMessage(code: ErrorCodes.badRequest, message: '${message ?? e}'),

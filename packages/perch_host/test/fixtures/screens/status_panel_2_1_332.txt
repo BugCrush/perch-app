@@ -1,0 +1,21 @@
+✻ Worked for 3s · done 11:05 PM
+> /status
+────────────────────────────────────────────────────────────────────────────────────────────────── perch attach test a ─
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+  Settings  Status   Config   Usage   Stats
+  Version:           2.1.332
+  Session name:      perch attach test a
+  Session ID:        00000000-0000-4000-8000-000000000000
+  Session kind:      interactive
+  Peer address:      uds:\\.\pipe\LOCAL\cc-msg-00000000000000000000000000000000
+  cwd:               D:\work\example
+  Login method:      Claude Pro account
+  Organization:      Example Organization
+  Email:             someone@example.invalid
+  Model:             haiku (claude-haiku-5-5)
+  MCP servers:       1 connected · /mcp
+  Setting sources:
+  Auto mode server:  Enabled
+  ←/→ to switch · Esc to close
+
+

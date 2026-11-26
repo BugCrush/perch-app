@@ -337,6 +337,23 @@ export const register: Register = on => {
       </Button>
     )
     if (view.kind === 'invite') {
+      // Enter in the field and Save both send the code.
+      const saveInviteCode = () => {
+        if (inviteCode.trim() === '') return
+        act($, async () => {
+          // The host connects again with the code and waits a few seconds for the relay.
+          const res = await api($, 'invite', { code: inviteCode.trim() })
+          inviteCode = ''
+          await reload($)
+          note =
+            res.accepted === true
+              ? 'Invite code saved: the relay accepted this machine.'
+              : typeof res.refusal === 'string'
+                ? '' // the relay line of the status says why (shown once)
+                : 'Invite code saved; the relay has not answered yet.'
+          show($, { kind: 'home' })
+        })
+      }
       return (
         <Box flexDirection="column">
           {header}
@@ -355,27 +372,10 @@ export const register: Register = on => {
             }}
             onSubmit={v => {
               inviteCode = v
+              saveInviteCode()
             }}
           />
-          <Button
-            key="save-code"
-            variant="primary"
-            onPress={() =>
-              act($, async () => {
-                // The host connects again with the code and waits a few seconds for the relay.
-                const res = await api($, 'invite', { code: inviteCode })
-                inviteCode = ''
-                await reload($)
-                note =
-                  res.accepted === true
-                    ? 'Invite code saved: the relay accepted this machine.'
-                    : typeof res.refusal === 'string'
-                      ? `Relay: ${res.refusal}.`
-                      : 'Invite code saved; the relay has not answered yet.'
-                show($, { kind: 'home' })
-              })
-            }
-          >
+          <Button key="save-code" variant="primary" onPress={saveInviteCode}>
             Save
           </Button>
           <Button key="back" onPress={go({ kind: 'home' })}>

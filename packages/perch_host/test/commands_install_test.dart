@@ -53,6 +53,11 @@ void main() {
     expect((hooks['hooks'] as Map).keys, containsAll(['PermissionRequest', 'Stop', 'StopFailure']));
     expect(module, contains("'x-perch-menu': '1'"));
     expect(module, contains('asUser: true'));
+    // Mac, 2026-11-26: Enter in the invite code field only stored the text; Save had to be
+    // reached with Tab. Enter saves a code now, the same way Save does.
+    final field = RegExp(r'onSubmit=\{v => \{([^}]*)\}\}').allMatches(module).map((m) => m.group(1)!).toList();
+    expect(field.where((b) => b.contains('inviteCode = v') && b.contains('saveInviteCode()')), hasLength(1));
+    expect(module, contains('onPress={saveInviteCode}'));
   });
 
   test('install_writes_the_plugin_and_uninstall_removes_exactly_it', () {

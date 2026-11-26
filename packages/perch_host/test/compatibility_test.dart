@@ -26,7 +26,7 @@ void main() {
     expect(t.current.claudeVersion, '2.1.323');
     t.setVersion('2.1.322');
     expect(t.current.status, CompatibilityStatus.ok);
-    t.setVersion('2.1.332');
+    t.setVersion('2.1.340');
     expect(t.current.status, CompatibilityStatus.untested);
     t.setVersion(null); // could not run claude --version: keep what is known
     expect(t.current.status, CompatibilityStatus.untested);
@@ -87,7 +87,7 @@ void main() {
 
     test('each_kind_that_works_is_recorded_and_all_three_make_the_version_checked', () async {
       final store = VersionStore.load(tmp.path);
-      final t = CompatibilityTracker(store: store)..setVersion('2.1.332');
+      final t = CompatibilityTracker(store: store)..setVersion('2.1.340');
       final changes = <Compatibility>[];
       final sub = t.changes.listen(changes.add);
       expect(t.current.status, CompatibilityStatus.untested);
@@ -98,30 +98,30 @@ void main() {
       await Future<void>.delayed(Duration.zero);
       expect(t.current.status, CompatibilityStatus.untested);
       expect(t.current.seenWorking, unorderedEquals(['question', 'transcript', 'permission']));
-      expect(seenWorkingLine(t.current), 'Seen working on 2.1.332: questions ✓, permissions ✓, plans —');
+      expect(seenWorkingLine(t.current), 'Seen working on 2.1.340: questions ✓, permissions ✓, plans —');
       expect(changes, hasLength(3));
       t.recordWorking(WorkingKinds.plan);
       await Future<void>.delayed(Duration.zero);
       expect(t.current.status, CompatibilityStatus.ok);
       expect(changes.last.status, CompatibilityStatus.ok);
-      expect(store.verified, contains('2.1.332'));
+      expect(store.verified, contains('2.1.340'));
       // Persisted: a restarted host knows.
-      final again = CompatibilityTracker(store: VersionStore.load(tmp.path))..setVersion('2.1.332');
+      final again = CompatibilityTracker(store: VersionStore.load(tmp.path))..setVersion('2.1.340');
       expect(again.current.status, CompatibilityStatus.ok);
       // A newer version is unchecked again; the notes are read from after the verified one.
-      again.setVersion('2.1.333');
+      again.setVersion('2.1.341');
       expect(again.current.status, CompatibilityStatus.untested);
-      expect(again.newestChecked, '2.1.332');
+      expect(again.newestChecked, '2.1.340');
       await sub.cancel();
     });
 
     test('progress_survives_a_restart', () {
       CompatibilityTracker(store: VersionStore.load(tmp.path))
-        ..setVersion('2.1.332')
+        ..setVersion('2.1.340')
         ..recordWorking(WorkingKinds.plan);
-      final t = CompatibilityTracker(store: VersionStore.load(tmp.path))..setVersion('2.1.332');
+      final t = CompatibilityTracker(store: VersionStore.load(tmp.path))..setVersion('2.1.340');
       expect(t.current.seenWorking, ['plan']);
-      expect(seenWorkingLine(t.current), 'Seen working on 2.1.332: questions —, permissions —, plans ✓');
+      expect(seenWorkingLine(t.current), 'Seen working on 2.1.340: questions —, permissions —, plans ✓');
     });
 
     test('nothing_is_recorded_for_a_checked_version', () {
@@ -134,12 +134,12 @@ void main() {
 
     test('a_drift_on_the_version_stops_it_from_being_promoted_even_after_a_restart', () {
       final store = VersionStore.load(tmp.path);
-      final t = CompatibilityTracker(store: store)..setVersion('2.1.332');
+      final t = CompatibilityTracker(store: store)..setVersion('2.1.340');
       t.recordWorking(WorkingKinds.question);
       t.drift(reason: 'r', session: 's', expected: 'e');
       t.recordWorking(WorkingKinds.permission);
       expect(t.current.status, CompatibilityStatus.drifted);
-      final again = CompatibilityTracker(store: VersionStore.load(tmp.path))..setVersion('2.1.332');
+      final again = CompatibilityTracker(store: VersionStore.load(tmp.path))..setVersion('2.1.340');
       expect(again.current.status, CompatibilityStatus.untested); // the red banner clears on restart
       again
         ..recordWorking(WorkingKinds.question)
@@ -157,37 +157,37 @@ void main() {
               store: store,
               fetch: (_) async {
                 fetches++;
-                return '# Changelog\n\n## 2.1.333\n\n- Fixed permission prompts wrapping\n\n## 2.1.332\n\n- Faster MCP\n';
+                return '# Changelog\n\n## 2.1.334\n\n- Fixed permission prompts wrapping\n\n## 2.1.333\n\n- Faster MCP\n';
               }));
       t.setVersion('2.1.323');
       await t.releaseNotesDone;
       expect(fetches, 0); // a checked version needs no notes
-      t.setVersion('2.1.333');
+      t.setVersion('2.1.334');
       expect(t.current.releaseNotes, isNull); // still reading
       await t.releaseNotesDone;
       final f = t.current.releaseNotes!;
       expect(f.checked, isTrue);
-      expect(f.versions, ['2.1.332', '2.1.333']);
+      expect(f.versions, ['2.1.333', '2.1.334']);
       expect(f.relevantLines, ['Fixed permission prompts wrapping']);
     });
 
     test('self_test_results_and_the_setting_show_in_the_status', () async {
       final store = VersionStore.load(tmp.path);
       final t = CompatibilityTracker(store: store, clock: () => DateTime.fromMillisecondsSinceEpoch(1000))
-        ..setVersion('2.1.332');
+        ..setVersion('2.1.340');
       expect(t.current.selfTest!.enabled, isFalse);
       expect(t.current.selfTest!.state, SelfTestState.idle);
       t.setSelfTestEnabled(true);
       expect(VersionStore.load(tmp.path).selfTestNewVersions, isTrue);
       t.selfTestStarted();
       expect(t.current.selfTest!.state, SelfTestState.running);
-      t.selfTestFinished(version: '2.1.332', passed: false, reason: 'The plan was not approved.', evidence: 'Step: plan');
+      t.selfTestFinished(version: '2.1.340', passed: false, reason: 'The plan was not approved.', evidence: 'Step: plan');
       expect(t.current.status, CompatibilityStatus.drifted);
       expect(t.current.reason, contains('self-test'));
       expect(t.current.evidence, contains('Step: plan'));
       expect(t.current.selfTest!.state, SelfTestState.failed);
       expect(t.current.selfTest!.reason, 'The plan was not approved.');
-      expect(VersionStore.load(tmp.path).selfTests['2.1.332']!.passed, isFalse);
+      expect(VersionStore.load(tmp.path).selfTests['2.1.340']!.passed, isFalse);
 
       final u = CompatibilityTracker(store: VersionStore.load(tmp.path))..setVersion('2.1.333');
       u.selfTestStarted();

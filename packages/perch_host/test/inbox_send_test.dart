@@ -67,6 +67,14 @@ void main() {
     expect(external.kills, isEmpty, reason: 'nothing closed');
   });
 
+  test('an attachment sent through the inbox carries its full path in the hidden note', () async {
+    await manager.list();
+    const text = 'Look\n@perch-attachments/2026-11-26_1612_x.png';
+    await manager.send(sid, text);
+    expect(writes.single.$2, inboxLine(text, folder: work.path));
+    expect(writes.single.$2, contains(jsonEncode('${work.path}${sep}perch-attachments${sep}2026-11-26_1612_x.png').replaceAll('"', '')));
+  });
+
   test('a session in a terminal Perch can type into is still typed into', () async {
     typer.operable = true;
     await manager.list();

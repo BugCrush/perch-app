@@ -7,6 +7,7 @@ import 'package:flutter/widgets.dart';
 import 'package:material_ui/material_ui.dart' show Icons, SelectionArea;
 import 'package:perch_protocol/perch_protocol.dart';
 
+import '../connection/attachment_upload.dart';
 import '../connection/host_connection.dart';
 import '../time_format.dart';
 import 'cards/prompt_cards.dart';
@@ -22,6 +23,8 @@ import 'board_screen.dart' show openSessionBoard;
 import 'glass/click.dart';
 import 'drafts.dart';
 import 'usage_limit_card.dart' show UsageLimitCard;
+import 'attachment_chips.dart';
+import 'sent_attachments.dart';
 
 /// Perch's own command (the host lists it with the session's commands).
 const perchCommandName = '/perch';
@@ -99,12 +102,16 @@ class SessionScreen extends StatefulWidget {
   /// `/perch` picked or sent in the composer: the app's own board for the session's
   /// project opens (nothing goes to the terminal). Replaced in tests.
   final void Function(BuildContext context, HostConnection connection, String cwd) openPerch;
+
+  /// Where attachments come from (null: the phone's photo and file pickers).
+  final AttachmentPicker? picker;
   const SessionScreen(
       {super.key,
       required this.connection,
       required this.sessionId,
       this.clock = DateTime.now,
-      this.openPerch = openSessionBoard});
+      this.openPerch = openSessionBoard,
+      this.picker});
 
   @override
   State<SessionScreen> createState() => _SessionScreenState();
@@ -114,6 +121,9 @@ class _SessionScreenState extends State<SessionScreen> {
   late final SessionFeed _feed;
   final _text = TextEditingController();
   final _scroll = ScrollController();
+
+  /// The attachments of the message being written (uploading as soon as picked).
+  late final AttachmentUploader _uploads;
   StreamSubscription<ErrorMessage>? _errors;
   bool _stickToBottom = true;
 
@@ -233,6 +243,7 @@ class _SessionScreenState extends State<SessionScreen> {
     // A message typed here earlier and not sent comes back (kept on the phone).
     _text.text = Drafts.get(conn.machine.id, widget.sessionId);
     _text.addListener(_onTyped);
+    _uploads = AttachmentUploader(conn)..addListener(_onUploads);
     _feed = conn.feed(widget.sessionId);
     // While this screen is open the host sends this device no notification for it.
     conn.focusSession(widget.sessionId);
@@ -257,6 +268,7 @@ class _SessionScreenState extends State<SessionScreen> {
     conn.unfocusSession(widget.sessionId);
     _errors?.cancel();
     unawaited(Drafts.flush());
+    _uploads.dispose();
     _text.dispose();
     _scroll.dispose();
     _showDown.dispose();
@@ -369,6 +381,13 @@ class _SessionScreenState extends State<SessionScreen> {
           conn.takeOver(widget.sessionId, force: true);
           conn.send(widget.sessionId, text);
         }
+      case ErrorCodes.terminalDialog:
+        // Nothing was typed: one of Claude Code's own questions is on the screen. The text
+        // goes back into the composer to send again once it is answered.
+        final text = _pendingText;
+        _pendingText = null;
+        if (text != null && _text.text.trim().isEmpty) _text.text = text;
+        say(context, 'Claude Code is asking something in the terminal on $where. Answer it there, then send again.');
       case ErrorCodes.cannotAnswerInTerminal:
         // The card stays; it is shown afresh so it can be used again.
         say(context, 'Answer this one in the terminal on $where');
@@ -396,16 +415,41 @@ class _SessionScreenState extends State<SessionScreen> {
     return l.sessions.any((x) => x.id == widget.sessionId) ? l : null;
   }
 
+  void _onUploads() {
+    if (mounted) setState(() {});
+  }
+
+  /// Picks a photo or a file and starts uploading it into the session's folder.
+  Future<void> _attach() async {
+    final picked = await pickAttachment(context, widget.picker ?? const SystemAttachmentPicker());
+    if (picked == null || !mounted) return;
+    _uploads.add(
+        name: picked.name, bytes: picked.bytes, mime: picked.mime, sessionId: widget.sessionId, size: picked.size);
+  }
+
+  /// Send waits while an attachment uploads or has failed (Retry or Remove it first).
+  bool get _attachmentsReady => !_uploads.uploading && !_uploads.hasFailed;
+
   void _send() {
-    final text = _text.text.trim();
-    if (text.isEmpty) return;
-    if (text == perchCommandName) {
+    final typed = _text.text.trim();
+    final paths = _uploads.donePaths;
+    if (typed.isEmpty && paths.isEmpty) return;
+    if (!_attachmentsReady) return;
+    if (typed == perchCommandName && paths.isEmpty) {
       _openPerch();
       return;
+    }
+    final text = withAttachments(typed, paths);
+    for (final a in _uploads.items) {
+      final path = a.path;
+      if (a.state == AttachmentState.done && path != null && a.isImage) {
+        SentAttachmentCache.put(conn.machine.id, _session?.cwd ?? '', path, a.bytes);
+      }
     }
     // A terminal session gets the message typed into it; keep it in case that fails.
     _pendingText = _session?.origin == SessionOrigin.external ? text : null;
     conn.send(widget.sessionId, text);
+    _uploads.clear();
     _text.clear();
     _stickToBottom = true;
     WidgetsBinding.instance.addPostFrameCallback((_) => _jumpToBottom());
@@ -473,6 +517,8 @@ class _SessionScreenState extends State<SessionScreen> {
             event,
             key: ValueKey(event.seq),
             result: event is ToolCall ? results[event.toolUseId] : null,
+            machineId: conn.machine.id,
+            folder: _session?.cwd,
           ),
         final _GroupItem g => SubagentAside(
             key: ValueKey('group-${g.parent}'),
@@ -882,12 +928,31 @@ class _SessionScreenState extends State<SessionScreen> {
         ),
       );
 
-  Widget _composer(bool working, bool ended) => ValueListenableBuilder<String>(
-      valueListenable: conn.permission,
-      builder: (context, _, _) => _composerRow(working, ended, watch: !conn.canControl));
+  Widget _composer(bool working, bool ended) => ListenableBuilder(
+      listenable: Listenable.merge([conn.permission, conn.attachmentsListenable, conn.route]),
+      builder: (context, _) {
+        final watch = !conn.canControl;
+        final row = _composerRow(working, ended, watch: watch);
+        if (_uploads.items.isEmpty) return row;
+        return Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+          AttachmentChips(
+              items: _uploads.items,
+              viaRelay: conn.route.value == LinkRoute.relay,
+              onRetry: _uploads.retry,
+              onRemove: _uploads.remove),
+          row,
+        ]);
+      });
 
   Widget _composerRow(bool working, bool ended, {required bool watch}) =>
       Row(crossAxisAlignment: CrossAxisAlignment.end, children: [
+        if (conn.attachments && !watch && !ended) ...[
+          Padding(
+            padding: const EdgeInsets.only(bottom: 4),
+            child: AttachButton(key: const ValueKey('attach'), onTap: _attach),
+          ),
+          const SizedBox(width: 8),
+        ],
         Expanded(
           child: GlassField(
             key: const ValueKey('composer'),
@@ -913,7 +978,7 @@ class _SessionScreenState extends State<SessionScreen> {
             size: 52,
             warm: true,
             label: 'Send',
-            onTap: ended || watch ? null : _send),
+            onTap: ended || watch || !_attachmentsReady ? null : _send),
       ]);
 }
 

@@ -105,6 +105,64 @@ void main() {
     expect((await fresh.filesIn(tmp.path)).files.map((f) => f.path), containsAll(['a.txt', 'b.txt']));
   });
 
+  group('perch-attachments', () {
+    void attachments() {
+      file('perch-attachments/2026-11-26_1500_old.png');
+      file('perch-attachments/2026-11-26_1612_photo.jpg');
+      file('perch-attachments/.partial-abc');
+      File('${tmp.path}${sep}perch-attachments${sep}2026-11-26_1500_old.png')
+          .setLastModifiedSync(DateTime.now().subtract(const Duration(hours: 2)));
+    }
+
+    const old = 'perch-attachments/2026-11-26_1500_old.png';
+    const photo = 'perch-attachments/2026-11-26_1612_photo.jpg';
+
+    test('listed newest first even though git ignores them, without partials', () async {
+      if (!await git(['init', '-q'])) return markTestSkipped('no git');
+      file('.git/info/exclude', '/perch-attachments/\n');
+      file('src/a.dart');
+      attachments();
+      final all = await FileIndex().filesIn(tmp.path);
+      final paths = all.files.map((f) => f.path).toList();
+      expect(paths.where((p) => p.startsWith('perch-attachments/')), [photo, old]);
+      expect(paths.indexOf(photo), lessThan(paths.indexOf('src/a.dart')));
+      expect(paths.where((p) => p == 'perch-attachments'), hasLength(1));
+      expect(paths, isNot(contains('perch-attachments/.partial-abc')));
+      final none = await FileIndex().search(tmp.path, '');
+      expect(none.files.map((f) => f.path), containsAll([photo, old]));
+      final hit = await FileIndex().search(tmp.path, 'photo');
+      expect(hit.files.first.path, photo);
+    });
+
+    test('a repository that does not ignore them lists each once', () async {
+      if (!await git(['init', '-q'])) return markTestSkipped('no git');
+      file('src/a.dart');
+      attachments();
+      final paths = (await FileIndex().filesIn(tmp.path)).files.map((f) => f.path).toList();
+      expect(paths.where((p) => p == photo), hasLength(1));
+      expect(paths.where((p) => p == 'perch-attachments'), hasLength(1));
+    });
+
+    test('a plain folder lists each once', () async {
+      file('notes.txt');
+      attachments();
+      final paths = (await FileIndex().filesIn(tmp.path)).files.map((f) => f.path).toList();
+      expect(paths.where((p) => p.startsWith('perch-attachments/')), [photo, old]);
+      expect(paths.where((p) => p == 'perch-attachments'), hasLength(1));
+    });
+  });
+
+  test('forget drops a folder from the cache so a new attachment shows at once', () async {
+    file('notes.txt');
+    final idx = FileIndex();
+    expect((await idx.filesIn(tmp.path)).files.map((f) => f.path), isNot(contains('perch-attachments/new.png')));
+    file('perch-attachments/new.png');
+    expect((await idx.filesIn(tmp.path)).files.map((f) => f.path), isNot(contains('perch-attachments/new.png')),
+        reason: 'cached for 30 s');
+    idx.forget(tmp.path);
+    expect((await idx.filesIn(tmp.path)).files.map((f) => f.path), contains('perch-attachments/new.png'));
+  });
+
   test('no folder, or one that is gone: nothing', () async {
     expect((await FileIndex().filesIn('')).files, isEmpty);
     expect((await FileIndex().filesIn('${tmp.path}${sep}gone')).files, isEmpty);

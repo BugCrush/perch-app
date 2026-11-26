@@ -1,0 +1,16 @@
+  choice each. After I answer, reply with my three answers separated by commas and nothing else.
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+←  [×] Colour  [×] Fruit  [×] Season  √ Submit  →
+Review your answers
+ ● Which colour?
+   → Blue
+ ● Which fruit?
+   → Apple
+ ● Which season?
+   → Winter
+> 1. Submit answers
+  2. Cancel
+ ↑ 5 more lines
+────────────────────────────────────────────────────────────────────────────────────────────────── perch attach test a ─
+
+

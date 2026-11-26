@@ -15,7 +15,7 @@ import 'release_notes.dart';
 import 'version_store.dart';
 
 /// Claude Code versions this Perch build was checked against (update with each check).
-const checkedClaudeVersions = ['2.1.323', '2.1.325', '2.1.326', '2.1.327', '2.1.328', '2.1.329', '2.1.330', '2.1.331'];
+const checkedClaudeVersions = ['2.1.323', '2.1.325', '2.1.326', '2.1.327', '2.1.328', '2.1.329', '2.1.330', '2.1.331', '2.1.332'];
 
 /// Compares dotted versions; negative when a < b.
 int compareVersions(String a, String b) {

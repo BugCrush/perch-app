@@ -244,6 +244,18 @@ void main() {
     expect((after[1] as SendMessage).text, 'Second try');
   });
 
+  testWidgets('a_dialog_in_the_terminal_gives_the_message_back_and_offers_no_take_over', (tester) async {
+    await open(tester, origin: SessionOrigin.external);
+    await sendText(tester, 'Keep going');
+    await hostSends(tester, const ErrorMessage(code: ErrorCodes.terminalDialog, message: 'Claude Code is asking something'));
+    expect(find.text('Claude Code is asking something in the terminal on devbox. Answer it there, then send again.'),
+        findsOneWidget);
+    expect(find.text('Perch cannot type into this terminal'), findsNothing);
+    expect(tester.widget<TextField>(composer()).controller!.text, 'Keep going');
+    expect(sent().whereType<TakeOver>(), isEmpty);
+    expect(sent().length, 1);
+  });
+
   testWidgets('take_over_dialog_and_terminal_error_use_the_alias', (tester) async {
     await open(tester, origin: SessionOrigin.external, state: SessionState.waitingPermission, alias: 'Big rig');
     await sendText(tester, 'Keep going');

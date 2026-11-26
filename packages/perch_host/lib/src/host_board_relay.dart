@@ -261,7 +261,20 @@ Future<List<String>> relayUsageLines(HostState state, {RelayHttp? http}) async {
             '${j['exempt'] == true ? '; this machine is the relay owner\'s and keeps working' : ''}.');
       }
     } else {
-      out.add('This machine: the relay answered ${r.status} (an older relay has no usage count).');
+      Object? error;
+      try {
+        final b = jsonDecode(r.body);
+        if (b is Map) error = b['error'];
+      } catch (_) {}
+      if (error == 'deviceTokenHashRequired') {
+        // A machine that has never registered (its first connection registers it).
+        out.add('This machine: the relay has not accepted it yet (it connects once remote access is on; '
+            'a relay that wants an invite code needs one: /perch, or perch_host relay invite <code>).');
+      } else if (r.status == 403 && error is String) {
+        out.add('This machine: the relay refuses it ($error): /perch, or perch_host relay invite <code>.');
+      } else {
+        out.add('This machine: the relay answered ${r.status} (an older relay has no usage count).');
+      }
     }
   } catch (e) {
     out.add('This machine: could not reach the relay ($e).');

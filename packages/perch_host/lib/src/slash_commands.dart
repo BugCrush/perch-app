@@ -9,7 +9,8 @@ import 'package:perch_protocol/perch_protocol.dart';
 
 import 'transcript.dart' show claudeConfigDir;
 
-/// Claude Code's own commands (2.1.331: /claude-approvals, /passes, /privacy-settings, /send-to-project, /ship,
+/// Claude Code's own commands (2.1.332: /schedule reworded, read on the Mac on 2026-11-26 in a tmux test session; /passes,
+/// /privacy-settings and /web-setup do not show for the Mac's Team account and are kept; 2.1.331: /claude-approvals, /passes, /privacy-settings, /send-to-project, /ship,
 /// /steward and /web-setup added, /clear, /design-sync, /tasks and /teleport reworded, read on Windows on 2026-11-25;
 /// 2.1.328: /deep-research and /ultrareview added and /code-review reworded, read on
 /// Windows on 2026-11-19 the same way; 2.1.327 had the same set as 2.1.326; names and descriptions as its `/` list shows them,
@@ -98,7 +99,7 @@ const builtinCommands = <SlashCommandInfo>[
   SlashCommandInfo(name: '/run', description: 'Launch this project’s app to see your change working'),
   SlashCommandInfo(name: '/run-skill-generator', description: 'Create a skill that knows how to run this project’s app'),
   SlashCommandInfo(name: '/sandbox', description: '◯ sandbox disabled (⏎ to configure)'),
-  SlashCommandInfo(name: '/schedule', description: 'Create and manage routines: cloud agents on a schedule'),
+  SlashCommandInfo(name: '/schedule', description: 'Create and manage scheduled tasks that run in the cloud'),
   SlashCommandInfo(name: '/security-review', description: 'Complete a security review of the pending changes on the current branch'),
   SlashCommandInfo(name: '/send-to-project', description: "Send this session's work to a Claude Project"),
   SlashCommandInfo(name: '/ship', description: 'Open a pull request if there is none, review it here, then watch it'),

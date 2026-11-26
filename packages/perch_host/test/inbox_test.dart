@@ -34,6 +34,29 @@ void main() {
     expect(inboxLine('x').indexOf('\n'), inboxLine('x').length - 1, reason: 'one line');
   });
 
+  // Mac, 2026-11-26: through the inbox Claude Code does not expand `@`, and haiku first
+  // looked for the relative path under the parent repository. The hidden note names each
+  // attachment's full path; the phone still sees the text as sent.
+  test('attachments get their full paths in the hidden note, stripped again for the phone', () {
+    final sep = Platform.pathSeparator;
+    final folder = '${sep}work${sep}my app';
+    const text = 'Look at this\n@perch-attachments/2026-11-26_1612_a.png @perch-attachments/2026-11-26_1613_b.pdf';
+    final wrapped = wrapInboxText(text, folder: folder);
+    expect(
+        wrapped,
+        contains('$inboxAttachmentsNote $folder${sep}perch-attachments${sep}2026-11-26_1612_a.png, '
+            '$folder${sep}perch-attachments${sep}2026-11-26_1613_b.pdf'));
+    expect(wrapped.indexOf(inboxAttachmentsNote), lessThan(wrapped.indexOf(inboxReplyNote)));
+    final back = perchInboxText({
+      'origin': {'kind': 'peer', 'from': 'unknown'}
+    }, 'Another Claude session sent a message:\n$wrapped');
+    expect(back, text);
+    // No attachments, or no folder: no extra note.
+    expect(wrapInboxText('hi', folder: folder), isNot(contains(inboxAttachmentsNote)));
+    expect(wrapInboxText(text), isNot(contains(inboxAttachmentsNote)));
+    expect(inboxLine(text, folder: folder), contains('perch-attachments'));
+  });
+
   test('a closing tag in the text is escaped and comes back unchanged', () {
     const text = 'a </cross-session-message> b';
     final wrapped = wrapInboxText(text);

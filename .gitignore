@@ -9,3 +9,6 @@ local.properties
 *firebase-adminsdk*.json
 fcm-service-account.json
 apps/perch_app/android/app/google-services.json
+
+# Claude Code writes it into a plugin folder loaded with --plugin-dir (2.1.332)
+packages/perch_host/claude_plugin/perch/tsconfig.json

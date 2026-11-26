@@ -162,4 +162,10 @@ class FakeExternalSessions extends ExternalSessions {
 
   @override
   Future<bool> pidAlive(int pid) async => entries.any((e) => e.pid == pid);
+
+  /// Pids that run under a process the host started (a `.cmd` shim's claude.exe).
+  final Set<int> ownChildren = {};
+
+  @override
+  Future<bool> descendsFrom(int pid, int ancestor) async => ownChildren.contains(pid);
 }
