@@ -709,7 +709,8 @@ function roadMap(t0) {
 }
 
 for (const t of Object.values(themes)) {
-  for (const [name, fn] of [['banner', banner], ['how-it-works', architecture], ['a-day-with-perch', dayStrip], ['install', installSteps], ['using-perch', usingPerch], ['roadmap', roadMap]]) {
+  // The other pictures are 3D now (tool/readme/render3d); this draws the one still hand-drawn.
+  for (const [name, fn] of [['a-day-with-perch', dayStrip]]) {
     clipN = 0;
     resetGlyphs();
     const file = path.join(out, `${name}-${t.name}.svg`);

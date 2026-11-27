@@ -3,9 +3,11 @@
 <div align="center">
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="assets/readme/banner-dark.svg">
-  <source media="(prefers-color-scheme: light)" srcset="assets/readme/banner-light.svg">
-  <img src="assets/readme/banner-light.svg" width="100%" alt="Perch: a hand-painted orange bird perched on a terminal window. Watch and steer your Claude Code sessions from your phone.">
+  <source media="(prefers-reduced-motion: reduce) and (prefers-color-scheme: dark)" srcset="assets/readme/hero-dark-still.webp">
+  <source media="(prefers-reduced-motion: reduce)" srcset="assets/readme/hero-light-still.webp">
+  <source media="(prefers-color-scheme: dark)" srcset="assets/readme/hero-dark.webp">
+  <source media="(prefers-color-scheme: light)" srcset="assets/readme/hero-light.webp">
+  <img src="assets/readme/hero-light.webp" width="100%" alt="Perch: Perch's orange bird, puffy and three-dimensional with chrome legs, perched on a puffy orange terminal whose chrome prompt blinks; it breathes, blinks and hops. Watch and steer your Claude Code sessions from your phone.">
 </picture>
 
 **Your Claude Code sessions, from your phone.**
@@ -43,7 +45,7 @@
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/BugCrush/perch-app/readme-assets/walker-dark.svg">
   <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/BugCrush/perch-app/readme-assets/walker-light.svg">
-  <img src="https://raw.githubusercontent.com/BugCrush/perch-app/readme-assets/walker-light.svg" width="560" alt="Perch, day by day: a grid of the project's commits per day, with Perch's bird hopping from one active day to the next">
+  <img src="https://raw.githubusercontent.com/BugCrush/perch-app/readme-assets/walker-light.svg" width="880" alt="Perch, day by day: a grid of the project's commits per day, with Perch's bird hopping from one active day to the next">
 </picture>
 
 <sub>Perch's commits per day, redrawn on every push. The bird visits each day that saw work.</sub>
@@ -80,22 +82,146 @@ Perch lets you watch and steer the Claude Code sessions running on your computer
 
 ## Features
 
-- 🖥️ **Every session on every machine.** Live state (working, waiting for you, done), the conversation, **Stop**.
-- 🃏 **Answer from anywhere.** Permission requests, plans and Claude's questions arrive as cards: **Allow**, **Deny**, **Approve**, or pick answers and **Submit**. Questions come as a deck: one page per question, then a summary with a single Submit.
-- 🔔 **Notifications.** When a session needs an answer or finishes, and nothing while you are at the machine.
-- ▶️ **Start sessions** in any folder, with the model you want; the terminal opens on the machine.
-- 📋 **Task board.** Projects and tasks on your phone; run a task on a machine and get Claude's report back for review. `/perch` shows the same board inside Claude Code.
-- 📎 **Attachments.** Send a photo or a file from the phone into the session's folder.
-- 🔎 **Search** every conversation on every machine.
-- ⏳ **Usage limits.** When your plan's limit hits, choose to continue when it resets, wait, or switch account.
-- 🔒 **Private by design.** The phone and the machine talk end-to-end encrypted. The relay that connects them away from home only passes sealed messages it cannot read. A new phone must be allowed at the machine (Allow, Watch only, Deny), and the app can be locked with your fingerprint, face or PIN.
-- ✍️ **Drafts** are kept per conversation until you send them.
+<table>
+<tr>
+<td width="64" align="center" valign="top">
+<picture>
+  <source media="(prefers-reduced-motion: reduce) and (prefers-color-scheme: dark)" srcset="assets/readme/feature-sessions-dark-still.webp">
+  <source media="(prefers-reduced-motion: reduce)" srcset="assets/readme/feature-sessions-light-still.webp">
+  <source media="(prefers-color-scheme: dark)" srcset="assets/readme/feature-sessions-dark.webp">
+  <img src="assets/readme/feature-sessions-light.webp" width="56" alt="">
+</picture>
+</td>
+<td valign="top">
+<b>Every session on every machine</b><br>
+Live state (working, waiting for you, done), the conversation, <b>Stop</b>.
+</td>
+<td width="64" align="center" valign="top">
+<picture>
+  <source media="(prefers-reduced-motion: reduce) and (prefers-color-scheme: dark)" srcset="assets/readme/feature-cards-dark-still.webp">
+  <source media="(prefers-reduced-motion: reduce)" srcset="assets/readme/feature-cards-light-still.webp">
+  <source media="(prefers-color-scheme: dark)" srcset="assets/readme/feature-cards-dark.webp">
+  <img src="assets/readme/feature-cards-light.webp" width="56" alt="">
+</picture>
+</td>
+<td valign="top">
+<b>Answer from anywhere</b><br>
+Permission requests, plans and Claude's questions arrive as cards: <b>Allow</b>, <b>Deny</b>, <b>Approve</b>, or pick answers and <b>Submit</b>. Questions come as a deck: one page per question, then a summary with a single Submit.
+</td>
+</tr>
+<tr>
+<td width="64" align="center" valign="top">
+<picture>
+  <source media="(prefers-reduced-motion: reduce) and (prefers-color-scheme: dark)" srcset="assets/readme/feature-notify-dark-still.webp">
+  <source media="(prefers-reduced-motion: reduce)" srcset="assets/readme/feature-notify-light-still.webp">
+  <source media="(prefers-color-scheme: dark)" srcset="assets/readme/feature-notify-dark.webp">
+  <img src="assets/readme/feature-notify-light.webp" width="56" alt="">
+</picture>
+</td>
+<td valign="top">
+<b>Notifications</b><br>
+When a session needs an answer or finishes, and nothing while you are at the machine.
+</td>
+<td width="64" align="center" valign="top">
+<picture>
+  <source media="(prefers-reduced-motion: reduce) and (prefers-color-scheme: dark)" srcset="assets/readme/feature-start-dark-still.webp">
+  <source media="(prefers-reduced-motion: reduce)" srcset="assets/readme/feature-start-light-still.webp">
+  <source media="(prefers-color-scheme: dark)" srcset="assets/readme/feature-start-dark.webp">
+  <img src="assets/readme/feature-start-light.webp" width="56" alt="">
+</picture>
+</td>
+<td valign="top">
+<b>Start sessions</b><br>
+In any folder, with the model you want; the terminal opens on the machine.
+</td>
+</tr>
+<tr>
+<td width="64" align="center" valign="top">
+<picture>
+  <source media="(prefers-reduced-motion: reduce) and (prefers-color-scheme: dark)" srcset="assets/readme/feature-board-dark-still.webp">
+  <source media="(prefers-reduced-motion: reduce)" srcset="assets/readme/feature-board-light-still.webp">
+  <source media="(prefers-color-scheme: dark)" srcset="assets/readme/feature-board-dark.webp">
+  <img src="assets/readme/feature-board-light.webp" width="56" alt="">
+</picture>
+</td>
+<td valign="top">
+<b>Task board</b><br>
+Projects and tasks on your phone; run a task on a machine and get Claude's report back for review. <code>/perch</code> shows the same board inside Claude Code.
+</td>
+<td width="64" align="center" valign="top">
+<picture>
+  <source media="(prefers-reduced-motion: reduce) and (prefers-color-scheme: dark)" srcset="assets/readme/feature-attach-dark-still.webp">
+  <source media="(prefers-reduced-motion: reduce)" srcset="assets/readme/feature-attach-light-still.webp">
+  <source media="(prefers-color-scheme: dark)" srcset="assets/readme/feature-attach-dark.webp">
+  <img src="assets/readme/feature-attach-light.webp" width="56" alt="">
+</picture>
+</td>
+<td valign="top">
+<b>Attachments</b><br>
+Send a photo or a file from the phone into the session's folder.
+</td>
+</tr>
+<tr>
+<td width="64" align="center" valign="top">
+<picture>
+  <source media="(prefers-reduced-motion: reduce) and (prefers-color-scheme: dark)" srcset="assets/readme/feature-search-dark-still.webp">
+  <source media="(prefers-reduced-motion: reduce)" srcset="assets/readme/feature-search-light-still.webp">
+  <source media="(prefers-color-scheme: dark)" srcset="assets/readme/feature-search-dark.webp">
+  <img src="assets/readme/feature-search-light.webp" width="56" alt="">
+</picture>
+</td>
+<td valign="top">
+<b>Search</b><br>
+Every conversation on every machine.
+</td>
+<td width="64" align="center" valign="top">
+<picture>
+  <source media="(prefers-reduced-motion: reduce) and (prefers-color-scheme: dark)" srcset="assets/readme/feature-limits-dark-still.webp">
+  <source media="(prefers-reduced-motion: reduce)" srcset="assets/readme/feature-limits-light-still.webp">
+  <source media="(prefers-color-scheme: dark)" srcset="assets/readme/feature-limits-dark.webp">
+  <img src="assets/readme/feature-limits-light.webp" width="56" alt="">
+</picture>
+</td>
+<td valign="top">
+<b>Usage limits</b><br>
+When your plan's limit hits, choose to continue when it resets, wait, or switch account.
+</td>
+</tr>
+<tr>
+<td width="64" align="center" valign="top">
+<picture>
+  <source media="(prefers-reduced-motion: reduce) and (prefers-color-scheme: dark)" srcset="assets/readme/feature-private-dark-still.webp">
+  <source media="(prefers-reduced-motion: reduce)" srcset="assets/readme/feature-private-light-still.webp">
+  <source media="(prefers-color-scheme: dark)" srcset="assets/readme/feature-private-dark.webp">
+  <img src="assets/readme/feature-private-light.webp" width="56" alt="">
+</picture>
+</td>
+<td valign="top">
+<b>Private by design</b><br>
+The phone and the machine talk end-to-end encrypted. The relay that connects them away from home only passes sealed messages it cannot read. A new phone must be allowed at the machine (Allow, Watch only, Deny), and the app can be locked with your fingerprint, face or PIN.
+</td>
+<td width="64" align="center" valign="top">
+<picture>
+  <source media="(prefers-reduced-motion: reduce) and (prefers-color-scheme: dark)" srcset="assets/readme/feature-drafts-dark-still.webp">
+  <source media="(prefers-reduced-motion: reduce)" srcset="assets/readme/feature-drafts-light-still.webp">
+  <source media="(prefers-color-scheme: dark)" srcset="assets/readme/feature-drafts-dark.webp">
+  <img src="assets/readme/feature-drafts-light.webp" width="56" alt="">
+</picture>
+</td>
+<td valign="top">
+<b>Drafts</b><br>
+Kept per conversation until you send them.
+</td>
+</tr>
+</table>
 
 ## How it works
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="assets/readme/how-it-works-dark.svg">
-  <img src="assets/readme/how-it-works-light.svg" width="100%" alt="Diagram. The Perch app on an Android phone talks to the Perch host on your computer: directly and end-to-end encrypted on the same Wi-Fi, or away from home through a relay (a Cloudflare Worker) that passes only sealed messages it cannot read. The host reads your Claude Code sessions and transcripts and types your answers; the Perch plugin's hooks send it instant updates. Push notifications go from the relay through Firebase to the phone, sealed per device.">
+  <source media="(prefers-reduced-motion: reduce) and (prefers-color-scheme: dark)" srcset="assets/readme/how-it-works-3d-dark-still.webp">
+  <source media="(prefers-reduced-motion: reduce)" srcset="assets/readme/how-it-works-3d-light-still.webp">
+  <source media="(prefers-color-scheme: dark)" srcset="assets/readme/how-it-works-3d-dark.webp">
+  <img src="assets/readme/how-it-works-3d-light.webp" width="100%" alt="Animated diagram, in puffy 3D with hand-drawn arrows. The Perch app on an Android phone talks to the Perch host on your computer: directly and end-to-end encrypted on the same Wi-Fi, or away from home through a relay (a Cloudflare Worker) that passes only sealed messages it cannot read. The host reads your Claude Code sessions and transcripts and types your answers; the Perch plugin's hooks send it instant updates. Push notifications go from the relay through Firebase to the phone, sealed per device. Sealed chrome packets travel each route.">
 </picture>
 
 - **The Perch app** (Flutter, Android 7.0 or newer) is what you hold.
@@ -108,8 +234,10 @@ Perch lets you watch and steer the Claude Code sessions running on your computer
 ## Install
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="assets/readme/install-dark.svg">
-  <img src="assets/readme/install-light.svg" width="100%" alt="Install in three steps. One: in Claude Code on the computer, add the plugin marketplace BugCrush/perch-app and install perch@perch; the Perch host installs in the background. Two: on the phone, install perch-1.0.0.apk from the latest release. Three: in Claude Code, /perch, Pair your phone; scan the QR code with the phone's camera; choose Allow at the computer.">
+  <source media="(prefers-reduced-motion: reduce) and (prefers-color-scheme: dark)" srcset="assets/readme/install-3d-dark-still.webp">
+  <source media="(prefers-reduced-motion: reduce)" srcset="assets/readme/install-3d-light-still.webp">
+  <source media="(prefers-color-scheme: dark)" srcset="assets/readme/install-3d-dark.webp">
+  <img src="assets/readme/install-3d-light.webp" width="100%" alt="Install in three steps, as small 3D toys. One: in Claude Code on the computer, add the plugin marketplace BugCrush/perch-app and install perch@perch; the Perch host installs in the background. Two: on the phone, install the Perch APK (perch-<version>.apk) from the latest release. Three: in Claude Code, /perch, Pair your phone; scan the QR code with the phone's camera; choose Allow at the computer.">
 </picture>
 
 **What you need:** Claude Code on the machine · **Windows 10 or 11 (x64)** or **macOS on Apple Silicon** · an **Android phone**, Android 7.0 or newer (no iPhone app yet). On the same Wi-Fi Perch works on its own; **away from home** it goes through a relay, which during the beta needs an **invite code**.
@@ -166,8 +294,10 @@ If `/perch` says **"this relay needs an invite code"**, choose **Enter invite co
 </picture>
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="assets/readme/using-perch-dark.svg">
-  <img src="assets/readme/using-perch-light.svg" width="100%" alt="A tour of the app in five phone drawings: every session with its state (working, needs you, done); answering cards (Allow, Approve a plan, Submit a question deck); starting a session in a folder with a model; the board, where Run on sends a task to a machine and Claude's report comes back to Review; Stop, and a push when Claude is done or needs you.">
+  <source media="(prefers-reduced-motion: reduce) and (prefers-color-scheme: dark)" srcset="assets/readme/using-perch-3d-dark-still.webp">
+  <source media="(prefers-reduced-motion: reduce)" srcset="assets/readme/using-perch-3d-light-still.webp">
+  <source media="(prefers-color-scheme: dark)" srcset="assets/readme/using-perch-3d-dark.webp">
+  <img src="assets/readme/using-perch-3d-light.webp" width="100%" alt="A tour of the app in five small 3D phones: every session with its state (working, needs you, done); answering cards (Allow, Approve a plan, Submit a question deck); starting a session in a folder with a model; the board, where Run on sends a task to a machine and Claude's report comes back to Review; Stop, and a push when Claude is done or needs you.">
 </picture>
 
 - **Sessions** — open a machine to see its sessions. Tap one for its conversation; type to send it a message; **Stop** interrupts it.
@@ -226,8 +356,10 @@ No. Everything between the phone and the computer is end-to-end encrypted with k
 ## Roadmap
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="assets/readme/roadmap-dark.svg">
-  <img src="assets/readme/roadmap-light.svg" width="100%" alt="Perch's flight path. The trail so far: waiting to get back to the desk (before Perch); Perch is born on Windows and Android (November 2026); Perch on the Mac (November 2026); Perch 1.0 (26 November 2026). You are here: the beta with friends, where Perch's bird sits by the campfire. The trail ahead: Google Play, Perch's own domain and website, a Linux host, the iPhone app, and the X that marks the spot: the public launch, Perch for everyone.">
+  <source media="(prefers-reduced-motion: reduce) and (prefers-color-scheme: dark)" srcset="assets/readme/roadmap-3d-dark-still.webp">
+  <source media="(prefers-reduced-motion: reduce)" srcset="assets/readme/roadmap-3d-light-still.webp">
+  <source media="(prefers-color-scheme: dark)" srcset="assets/readme/roadmap-3d-dark.webp">
+  <img src="assets/readme/roadmap-3d-light.webp" width="100%" alt="Perch's flight path, a hand-drawn map with 3D landmarks. The trail so far: waiting to get back to the desk (before Perch); Perch is born on Windows and Android (November 2026); Perch on the Mac (November 2026); Perch 1.0 (26 November 2026). You are here: the beta with friends, where Perch's bird sits by the campfire. The trail ahead: Google Play, Perch's own domain and website, a Linux host, the iPhone app, and the X that marks the spot: the public launch, Perch for everyone.">
 </picture>
 
 - [x] Perch on Windows and Android
@@ -251,6 +383,7 @@ The source is all here: `packages/perch_host` (the host, Dart), `packages/perch_
 - Host: `dart run bin/perch_host.dart serve` in `packages/perch_host`.
 - Your own relay: `npm ci` and `npx wrangler deploy` in `relay/` (a free Cloudflare account is enough), then `perch_host relay set <url>`. Push notifications need your own Firebase project (`google-services.json` for the app, the service-account key as the Worker secret `FCM_SERVICE_ACCOUNT`).
 - The README's drawings: `npm ci` and `node build-art.mjs` in `tool/readme`; the commit walker is `tool/readme/walker.mjs` (plain Node).
+- The README's 3D pictures (the banner, the feature icons, How it works, Install, Using Perch, the roadmap): `npm ci` in `tool/readme` and in `tool/readme/render3d`, then `node render.mjs` there. It renders with three.js in headless Chrome (no GPU needed) and encodes with libwebp's `img2webp` and `cwebp`.
 
 </details>
 
@@ -266,7 +399,7 @@ Perch is free software under the [GNU Affero General Public License v3.0](LICENS
 
 - [Flutter](https://flutter.dev) and Dart, for the app and the host.
 - [Cloudflare Workers](https://workers.cloudflare.com), for the relay.
-- [rough.js](https://roughjs.com) and [opentype.js](https://opentype.js.org), for the hand-drawn pictures in this README.
+- [rough.js](https://roughjs.com) and [opentype.js](https://opentype.js.org), for the hand-drawn pictures in this README, and [three.js](https://threejs.org) for the 3D ones.
 - The fonts, all under the SIL Open Font License: [Caveat](https://fonts.google.com/specimen/Caveat), [Newsreader](https://fonts.google.com/specimen/Newsreader), [Manrope](https://fonts.google.com/specimen/Manrope), [JetBrains Mono](https://www.jetbrains.com/lp/mono/).
 - [shields.io](https://shields.io), for the badges.
 

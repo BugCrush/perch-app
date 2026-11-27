@@ -1,0 +1,10 @@
+{
+  "name": "perch-readme-3d",
+  "private": true,
+  "type": "module",
+  "description": "Renders the README's 3D pictures offline: three.js in headless Chrome, frames encoded as animated WebP.",
+  "devDependencies": {
+    "three": "0.170.0",
+    "puppeteer-core": "23.10.4"
+  }
+}
