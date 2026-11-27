@@ -16,8 +16,9 @@
 [![Licence: AGPL-3.0](https://img.shields.io/badge/licence-AGPL--3.0-E9A23B)](LICENSE)
 ![Platforms: Windows, macOS, Android](https://img.shields.io/badge/platforms-Windows%20%C2%B7%20macOS%20%C2%B7%20Android-161310)
 ![A Claude Code plugin](https://img.shields.io/badge/Claude%20Code-plugin-FF7A52)
+[![Website: perch-ai.pages.dev](https://img.shields.io/badge/website-perch--ai.pages.dev-FCE6D1)](https://perch-ai.pages.dev)
 
-[Install](#install) · [How it works](#how-it-works) · [Features](#features) · [Privacy](#privacy-and-security) · [Report a bug](https://github.com/BugCrush/perch-app/issues)
+[Website](https://perch-ai.pages.dev) · [Install](#install) · [How it works](#how-it-works) · [Features](#features) · [Privacy](#privacy-and-security) · [Report a bug](https://github.com/BugCrush/perch-app/issues/new/choose)
 
 <br>
 
@@ -52,7 +53,7 @@
 
 </div>
 
-> **Beta.** Perch is being tested by a small group. Expect rough edges and tell us what breaks.
+> **Beta.** Perch is being tested by a small group. Expect rough edges and [tell us what breaks](https://github.com/BugCrush/perch-app/issues/new/choose): bugs, install trouble, ideas and first impressions are all welcome.
 
 <details>
 <summary><b>Contents</b></summary>
@@ -367,7 +368,8 @@ No. Everything between the phone and the computer is end-to-end encrypted with k
 - [x] Perch 1.0
 - [ ] **Now:** the beta with friends
 - [ ] Google Play
-- [ ] Perch's own domain and website
+- [x] Perch's website: [perch-ai.pages.dev](https://perch-ai.pages.dev)
+- [ ] Perch's own domain
 - [ ] A Linux build of the host (it runs on Linux from source today)
 - [ ] iPhone app
 - [ ] Public launch: Perch for everyone

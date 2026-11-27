@@ -1,0 +1,66 @@
+name: Something broke
+description: Perch did something wrong, or nothing at all.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for telling us. **This page is public:** never paste an invite code, a pairing link or QR code, a token, or a log that shows private file names or conversation text.
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: What you did, what you expected, and what Perch did instead.
+      placeholder: I tapped Allow on the phone; the card stayed and Claude kept waiting.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: How to make it happen again
+      description: Steps, if you know them. "Once, can't repeat it" is useful too.
+      placeholder: |
+        1. Start a session in Terminal (Mac)
+        2. Ask Claude to run the tests
+        3. Allow on the phone
+  - type: dropdown
+    id: where
+    attributes:
+      label: Computer
+      options:
+        - Windows 10 or 11
+        - Mac (Apple Silicon)
+        - Both
+    validations:
+      required: true
+  - type: input
+    id: terminal
+    attributes:
+      label: Where the Claude Code session runs
+      placeholder: Windows Terminal, Terminal.app, Warp, VS Code, iTerm2, tmux, started from the phone…
+  - type: input
+    id: versions
+    attributes:
+      label: Versions
+      description: Perch in Claude Code (`/plugin` → Installed), the app (menu → About), Claude Code (`claude --version`).
+      placeholder: Perch 1.1.0 · app 1.1.0 · Claude Code 2.1.332
+    validations:
+      required: true
+  - type: input
+    id: phone
+    attributes:
+      label: Phone
+      placeholder: Pixel 8, Android 15
+  - type: dropdown
+    id: network
+    attributes:
+      label: Connection
+      options:
+        - Same Wi-Fi as the computer
+        - Away (through the relay)
+        - Not sure
+  - type: textarea
+    id: extra
+    attributes:
+      label: Anything else
+      description: Screenshots help (crop out anything private). A few lines of `setup.log` for install trouble.

@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: A security problem
+    url: https://github.com/BugCrush/perch-app/security/advisories/new
+    about: Please report it privately here, not in a public issue.
+  - name: Perch's website
+    url: https://perch-ai.pages.dev
+    about: What Perch is and how to install it.

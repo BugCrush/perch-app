@@ -1,0 +1,27 @@
+name: Idea or feature request
+description: Something Perch should do, or do differently.
+labels: [enhancement]
+body:
+  - type: textarea
+    id: moment
+    attributes:
+      label: The moment
+      description: When did you wish Perch did this? What were you doing?
+      placeholder: I was on the train and Claude finished, but I could not see what it changed.
+    validations:
+      required: true
+  - type: textarea
+    id: idea
+    attributes:
+      label: What would help
+      description: Your idea, as rough as you like.
+    validations:
+      required: true
+  - type: dropdown
+    id: how-much
+    attributes:
+      label: How much would it matter to you
+      options:
+        - Nice to have
+        - I'd use it every day
+        - I can't really use Perch without it

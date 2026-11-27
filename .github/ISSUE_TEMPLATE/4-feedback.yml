@@ -1,0 +1,49 @@
+name: Beta feedback
+description: First impressions, what you used, what you skipped. Short answers are perfect.
+labels: [beta feedback]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for trying Perch. Answer only what you like; this page is public.
+  - type: dropdown
+    id: install
+    attributes:
+      label: Installing
+      options:
+        - Worked on its own
+        - Worked after some fiddling
+        - Needed help
+        - Didn't get it working
+  - type: checkboxes
+    id: used
+    attributes:
+      label: What you used
+      options:
+        - label: Answering questions and permissions from the phone
+        - label: Notifications
+        - label: Starting sessions from the phone
+        - label: The task board
+        - label: Attachments
+        - label: Search
+        - label: Away from home (through the relay)
+  - type: textarea
+    id: best
+    attributes:
+      label: The best bit
+  - type: textarea
+    id: worst
+    attributes:
+      label: The most annoying bit
+  - type: dropdown
+    id: keep
+    attributes:
+      label: Would you keep using it?
+      options:
+        - Yes, every day
+        - Now and then
+        - Probably not
+  - type: textarea
+    id: else
+    attributes:
+      label: Anything else

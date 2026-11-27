@@ -1,0 +1,53 @@
+name: Install, pairing or connection problem
+description: The plugin, the host, pairing the phone, the invite code, or reaching the machine.
+labels: [install]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **This page is public:** never paste your invite code, the pairing link or QR code, or a token. Lines from `setup.log` are fine once you have removed your user name from any paths.
+
+        Worth a try first: run `/perch` in Claude Code; if the host is not running, start a new Claude Code session (the plugin starts it).
+  - type: dropdown
+    id: step
+    attributes:
+      label: Where it went wrong
+      options:
+        - Installing the plugin
+        - The host never started (nothing in /perch)
+        - Pairing the phone (QR code or link)
+        - The invite code
+        - Works at home, not away (relay)
+        - The phone says the machine is offline
+        - Answers are not typed into the terminal (Mac Accessibility?)
+        - Something else
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: What you saw
+      description: The message on screen, word for word if you can.
+    validations:
+      required: true
+  - type: dropdown
+    id: where
+    attributes:
+      label: Computer
+      options:
+        - Windows 10 or 11
+        - Mac (Apple Silicon)
+    validations:
+      required: true
+  - type: input
+    id: versions
+    attributes:
+      label: Versions
+      description: Perch in Claude Code (`/plugin` → Installed), the app (menu → About), Claude Code (`claude --version`).
+      placeholder: Perch 1.1.0 · app 1.1.0 · Claude Code 2.1.332
+  - type: textarea
+    id: log
+    attributes:
+      label: setup.log (last lines)
+      description: "`%APPDATA%\\perch\\setup.log` on Windows, `~/.perch/setup.log` on a Mac. Remove your user name from paths."
+      render: text
