@@ -95,7 +95,7 @@ Perch lets you watch and steer the Claude Code sessions running on your computer
 </td>
 <td valign="top">
 <b>Every session on every machine</b><br>
-Live state (working, waiting for you, done), the conversation, <b>Stop</b>.
+Live state (working, waiting for you, done), the conversation, <b>Stop</b>. Slash commands and file references work just as in the Claude Code terminal.
 </td>
 <td width="64" align="center" valign="top">
 <picture>
@@ -302,6 +302,7 @@ If `/perch` says **"this relay needs an invite code"**, choose **Enter invite co
 </picture>
 
 - **Sessions** — open a machine to see its sessions. Tap one for its conversation; type to send it a message; **Stop** interrupts it.
+- **Slash commands and file references** — they work just as in the Claude Code terminal: `/` lists the session's commands (built-in, your own, the project's, skills and plugins) and `@` the files in its folder.
 - **Cards** — when Claude asks something, a card appears in the conversation (and as a notification). Questions come as a deck: one page per question, then your answers and **Submit**.
 - **New session** — on a machine, **New session**, pick the folder and model; a terminal opens there.
 - **Board** — projects and tasks. **Run on…** sends a task to a machine (a new session, or one that is idle); when Claude is done the task moves to **Review** with its report. In Claude Code, `/perch` lists the same board and can start a task in the current session.
@@ -351,6 +352,31 @@ Yes. On the same Wi-Fi the phone talks to your computer directly; the relay is o
 <summary><b>Can the relay read my code or my conversations?</b></summary>
 
 No. Everything between the phone and the computer is end-to-end encrypted with keys made at pairing. The relay forwards sealed messages it cannot open, and notifications are sealed for each phone, so Google's push service cannot read them either.
+
+</details>
+
+<details>
+<summary><b>How is Perch different from Claude Code's Remote Control?</b></summary>
+
+In short: Remote Control puts a session you chose onto your Claude account; Perch puts your whole machine on your phone.
+
+| | Perch | Claude Code Remote Control |
+|---|---|---|
+| **Which sessions** | Every Claude Code session on the machine, in any terminal, with no opt-in | Only sessions started with `--rc`, `claude rc` or `/rc` (or with auto-connect on) |
+| **Past conversations** | Listed, readable and searchable; resume, rename, delete | Not covered |
+| **Where your conversation goes** | End-to-end encrypted with a key per phone: directly on your Wi-Fi, otherwise through a relay that cannot read it | Stored on Anthropic's servers while connected |
+| **Who can connect** | A phone must be allowed at the machine (Allow, Watch only, Deny) | Anyone signed in to your claude.ai account |
+| **Logins** | Any login Claude Code accepts; several accounts per machine; a paused session can move to another account | claude.ai login only (no API keys, setup tokens, Bedrock or Vertex); off for ZDR and HIPAA organisations; an admin switch on Team and Enterprise |
+| **Usage limits** | Tracks the 5-hour and weekly limits: **Continue when available**, **Wait**, **Switch account** | `/usage` only |
+| **Waiting questions** | Questions, permissions and plans wait until you answer | Other dialogs expire after 5 minutes |
+| **New sessions from the phone** | In any folder on the machine (folder browser, name, model); the host starts on its own at log-in | Needs `claude rc` left running (server mode); sessions start in its folder or a new worktree |
+| **Beyond chat** | A task board synced across your machines; **Stop all** | — |
+| **Phones and browsers** | Android (iPhone is on the roadmap) | iPhone, Android and any browser (claude.ai/code) |
+| **Setup** | A plugin, a small host, the app, pairing (and an invite code away from home during the beta) | Built into Claude Code: nothing to install |
+| **Reliability** | Reads the terminal and types into it, checked against each Claude Code version | Built into Claude Code, so it moves with it |
+| **Extras** | Model switching, attachments, push notifications | Diff view, model and effort switching, forking a session, VS Code and Desktop as hosts |
+
+Both need the computer to stay on, can start sessions from the phone, take attachments and send push notifications. The Remote Control column comes from Anthropic's documentation in November 2026; check it for the latest.
 
 </details>
 
