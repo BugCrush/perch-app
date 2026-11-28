@@ -376,7 +376,7 @@ In short: Remote Control puts a session you chose onto your Claude account; Perc
 | **Reliability** | Reads the terminal and types into it, checked against each Claude Code version | Built into Claude Code, so it moves with it |
 | **Extras** | Model switching, attachments, push notifications | Diff view, model and effort switching, forking a session, VS Code and Desktop as hosts |
 
-Both need the computer to stay on, can start sessions from the phone, take attachments and send push notifications. The Remote Control column comes from Anthropic's documentation in November 2026; check it for the latest.
+Both need the computer to stay on, can start sessions from the phone, take attachments and send push notifications.
 
 </details>
 
